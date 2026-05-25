@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Zoapex.Business/Zoapex.Business.csproj" />
+  <Project Path="Zoapex.DataAccess/Zoapex.DataAccess.csproj" />
+  <Project Path="Zoapex.Entities/Zoapex.Entities.csproj" />
+  <Project Path="Zoapex.Presentation/Zoapex.Presentation.csproj" />
+</Solution>

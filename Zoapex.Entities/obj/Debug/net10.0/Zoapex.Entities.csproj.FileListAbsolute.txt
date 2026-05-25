@@ -1,0 +1,11 @@
+C:\Users\stphx\Desktop\Zoapex\Zoapex.Entities\bin\Debug\net10.0\Zoapex.Entities.deps.json
+C:\Users\stphx\Desktop\Zoapex\Zoapex.Entities\bin\Debug\net10.0\Zoapex.Entities.dll
+C:\Users\stphx\Desktop\Zoapex\Zoapex.Entities\bin\Debug\net10.0\Zoapex.Entities.pdb
+C:\Users\stphx\Desktop\Zoapex\Zoapex.Entities\obj\Debug\net10.0\Zoapex.Entities.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\stphx\Desktop\Zoapex\Zoapex.Entities\obj\Debug\net10.0\Zoapex.Entities.AssemblyInfoInputs.cache
+C:\Users\stphx\Desktop\Zoapex\Zoapex.Entities\obj\Debug\net10.0\Zoapex.Entities.AssemblyInfo.cs
+C:\Users\stphx\Desktop\Zoapex\Zoapex.Entities\obj\Debug\net10.0\Zoapex.Entities.csproj.CoreCompileInputs.cache
+C:\Users\stphx\Desktop\Zoapex\Zoapex.Entities\obj\Debug\net10.0\Zoapex.Entities.dll
+C:\Users\stphx\Desktop\Zoapex\Zoapex.Entities\obj\Debug\net10.0\refint\Zoapex.Entities.dll
+C:\Users\stphx\Desktop\Zoapex\Zoapex.Entities\obj\Debug\net10.0\Zoapex.Entities.pdb
+C:\Users\stphx\Desktop\Zoapex\Zoapex.Entities\obj\Debug\net10.0\ref\Zoapex.Entities.dll
