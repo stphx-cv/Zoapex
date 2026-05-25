@@ -13,3 +13,4 @@ C:\Users\stphx\Desktop\Zoapex\Zoapex.DataAccess\obj\Debug\net10.0\Zoapex.DataAcc
 C:\Users\stphx\Desktop\Zoapex\Zoapex.DataAccess\obj\Debug\net10.0\refint\Zoapex.DataAccess.dll
 C:\Users\stphx\Desktop\Zoapex\Zoapex.DataAccess\obj\Debug\net10.0\Zoapex.DataAccess.pdb
 C:\Users\stphx\Desktop\Zoapex\Zoapex.DataAccess\obj\Debug\net10.0\ref\Zoapex.DataAccess.dll
+C:\Users\stphx\Desktop\Zoapex\Zoapex.DataAccess\obj\Debug\net10.0\Zoapex.DataAccess.sourcelink.json
