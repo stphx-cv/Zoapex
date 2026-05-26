@@ -194,6 +194,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- fn_register_order: Registra pedido + detalle en transacción y descuenta stock
+-- p_customer_id puede ser NULL para ventas sin cliente registrado (mostrador)
 CREATE OR REPLACE FUNCTION fn_register_order(
     p_customer_id INT,
     p_details     JSONB   -- [{product_id, quantity, unit_price}]

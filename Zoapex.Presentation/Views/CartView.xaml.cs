@@ -15,9 +15,6 @@ public partial class CartView : Page
     // Carrito: lista observable vinculada al DataGrid de items
     private readonly ObservableCollection<OrderDetailEntity> _cartItems = [];
 
-    // ID de cliente genérico (en el prototipo no hay login)
-    private const int GuestCustomerId = 0;
-
     public CartView()
     {
         InitializeComponent();
@@ -147,9 +144,8 @@ public partial class CartView : Page
 
         try
         {
-            // En el prototipo se usa customer_id = 0 (sin login)
-            // Si Supabase exige FK válida, usa NULL o crea un cliente genérico
-            var orderId = _orderBL.RegisterOrder(GuestCustomerId, [.. _cartItems]);
+            // Sin login: customer_id queda NULL en la orden
+            var orderId = _orderBL.RegisterOrder(null, [.. _cartItems]);
 
             MessageBox.Show($"Sale registered successfully!\nOrder ID: {orderId}",
                 "Success", MessageBoxButton.OK, MessageBoxImage.Information);

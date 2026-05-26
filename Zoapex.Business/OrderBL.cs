@@ -8,7 +8,7 @@ public class OrderBL
     private readonly OrderDAL   _orderDal   = new();
     private readonly ProductDAL _productDal = new();
 
-    public int RegisterOrder(int customerId, List<OrderDetailEntity> details)
+    public int RegisterOrder(int? customerId, List<OrderDetailEntity> details)
     {
         // El carrito no puede estar vacío
         if (details == null || details.Count == 0)
