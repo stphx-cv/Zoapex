@@ -1,0 +1,29 @@
+@{
+    var titulo = ViewData["Title"] as string ?? "Zoapex";
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@titulo - Zoapex</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <nav>
+        <a asp-page="/Index">Inicio</a>
+    </nav>
+    <hr />
+
+    <main role="main">
+        @RenderBody()
+    </main>
+
+    <hr />
+    <footer>
+        Desarrollo de Aplicaciones Básico — Zoapex
+    </footer>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

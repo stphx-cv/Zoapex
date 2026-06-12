@@ -3,4 +3,5 @@
   <Project Path="Zoapex.DataAccess/Zoapex.DataAccess.csproj" />
   <Project Path="Zoapex.Entities/Zoapex.Entities.csproj" />
   <Project Path="Zoapex.Presentation/Zoapex.Presentation.csproj" />
+  <Project Path="Zoapex.Web/Zoapex.Web.csproj" />
 </Solution>

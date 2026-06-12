@@ -1,0 +1,38 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Inicio";
+}
+
+<h1>Zoapex</h1>
+<p>Tienda de mascotas — e-commerce con catálogo y registro de ventas. Proyecto de @Model.Author.</p>
+
+<h2>Qué tendrá mi web</h2>
+<ol>
+    <li>Página de inicio con la presentación del sistema.</li>
+    <li>Catálogo visual de productos (alimentos, juguetes, accesorios, higiene).</li>
+    <li>Carrito de compras para agregar productos con cantidad.</li>
+    <li>Registro de la venta: confirmar pedido, calcular IGV (18 %) y total.</li>
+    <li>Consulta del historial de pedidos del cliente.</li>
+    <li>Login con roles (administrador y vendedor/cliente) — fase posterior.</li>
+</ol>
+
+<h2>Módulos de administración (aplicación de escritorio WPF)</h2>
+<ol>
+    <li>Mantenimiento de Productos (registrar, editar, eliminar).</li>
+    <li>Mantenimiento de Categorías (registrar, editar, eliminar).</li>
+    <li>Reporte de ventas por fecha exportado a Excel — fase posterior.</li>
+    <li>Gestión de Clientes — fase posterior.</li>
+</ol>
+
+<h2>Operación maestro-detalle</h2>
+<p><strong>Pedido → DetallePedido</strong> (<code>order</code> → <code>order_detail</code>). Una venta tiene cabecera (cliente, fecha, subtotal, IGV, total) y varias líneas de detalle (producto, cantidad, precio unitario). Se graba todo o nada de forma transaccional y descuenta el stock.</p>
+
+<h2>Tablas principales</h2>
+<ul>
+    <li>category</li>
+    <li>product</li>
+    <li>customer</li>
+    <li>order</li>
+    <li>order_detail</li>
+</ul>
