@@ -4,35 +4,44 @@
     ViewData["Title"] = "Inicio";
 }
 
-<h1>Zoapex</h1>
-<p>Tienda de mascotas — e-commerce con catálogo y registro de ventas. Proyecto de @Model.Author.</p>
+<section class="hero">
+    <div class="hero-content">
+        <h1>Todo para tu mascota, en un solo lugar</h1>
+        <p>Zoapex es la tienda online de alimentos, juguetes, accesorios e higiene para mascotas. Explora el catálogo, arma tu carrito y confirma tu pedido.</p>
+        <div class="hero-actions">
+            <a asp-page="/Catalog" class="btn btn-primary">Ver catálogo</a>
+            <a asp-page="/Account/Register" class="btn btn-outline">Crear cuenta</a>
+        </div>
+    </div>
+    <div class="hero-visual" aria-hidden="true">🐕🐈</div>
+</section>
 
-<h2>Qué tendrá mi web</h2>
-<ol>
-    <li>Página de inicio con la presentación del sistema.</li>
-    <li>Catálogo visual de productos (alimentos, juguetes, accesorios, higiene).</li>
-    <li>Carrito de compras para agregar productos con cantidad.</li>
-    <li>Registro de la venta: confirmar pedido, calcular IGV (18 %) y total.</li>
-    <li>Consulta del historial de pedidos del cliente.</li>
-    <li>Login con roles (administrador y vendedor/cliente) — fase posterior.</li>
-</ol>
+<section class="feature-grid">
+    <article class="feature-card">
+        <div class="icon">🛍️</div>
+        <h3>Catálogo online</h3>
+        <p>Filtra productos por categoría y búsqueda en tiempo real con AJAX.</p>
+    </article>
+    <article class="feature-card">
+        <div class="icon">🛒</div>
+        <h3>Carrito inteligente</h3>
+        <p>Agrega productos, revisa totales con IGV 18% y confirma tu compra.</p>
+    </article>
+    <article class="feature-card">
+        <div class="icon">📦</div>
+        <h3>Mis pedidos</h3>
+        <p>Consulta tu historial de compras al iniciar sesión como cliente.</p>
+    </article>
+    <article class="feature-card">
+        <div class="icon">🖥️</div>
+        <h3>Panel WPF</h3>
+        <p>La app de escritorio gestiona productos, categorías y ventas maestro-detalle.</p>
+    </article>
+</section>
 
-<h2>Módulos de administración (aplicación de escritorio WPF)</h2>
-<ol>
-    <li>Mantenimiento de Productos (registrar, editar, eliminar).</li>
-    <li>Mantenimiento de Categorías (registrar, editar, eliminar).</li>
-    <li>Reporte de ventas por fecha exportado a Excel — fase posterior.</li>
-    <li>Gestión de Clientes — fase posterior.</li>
-</ol>
-
-<h2>Operación maestro-detalle</h2>
-<p><strong>Pedido → DetallePedido</strong> (<code>order</code> → <code>order_detail</code>). Una venta tiene cabecera (cliente, fecha, subtotal, IGV, total) y varias líneas de detalle (producto, cantidad, precio unitario). Se graba todo o nada de forma transaccional y descuenta el stock.</p>
-
-<h2>Tablas principales</h2>
-<ul>
-    <li>category</li>
-    <li>product</li>
-    <li>customer</li>
-    <li>order</li>
-    <li>order_detail</li>
-</ul>
+<section class="info-panel">
+    <h2>Arquitectura del proyecto</h2>
+    <p><strong>Ruta A — Escritorio + Web:</strong> el CRUD y las ventas administrativas se gestionan en WPF; la web comparte la misma base Supabase para que el cliente compre en línea.</p>
+    <p><strong>Operación maestro-detalle:</strong> <code>order</code> → <code>order_detail</code>. Registro transaccional con descuento automático de stock.</p>
+    <p>Proyecto de <strong>@Model.Author</strong> — Desarrollo de Aplicaciones Básico.</p>
+</section>

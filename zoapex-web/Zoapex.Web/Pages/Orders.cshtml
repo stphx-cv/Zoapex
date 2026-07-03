@@ -1,0 +1,45 @@
+@page
+@model OrdersModel
+@{
+    ViewData["Title"] = "Mis pedidos";
+}
+
+<div class="page-header">
+    <h1>Mis pedidos</h1>
+    <p>Hola <strong>@Model.CustomerName</strong>, aquí está tu historial de compras.</p>
+</div>
+
+@if (TempData["Success"] is string success)
+{
+    <div class="alert alert-success">@success</div>
+}
+
+@if (Model.Orders.Count == 0)
+{
+    <div class="info-panel">
+        <p>Aún no tienes pedidos registrados. <a asp-page="/Catalog">Explora el catálogo</a> y realiza tu primera compra.</p>
+    </div>
+}
+else
+{
+    @foreach (var order in Model.Orders)
+    {
+        <article class="order-card">
+            <h2>@order.Code</h2>
+            <p class="order-meta">@order.OrderDate.ToLocalTime().ToString("dddd, dd MMM yyyy · HH:mm")</p>
+            <p>
+                Subtotal: S/ @order.Subtotal.ToString("N2") ·
+                IGV: S/ @order.Tax.ToString("N2") ·
+                <strong>Total: S/ @order.Total.ToString("N2")</strong>
+            </p>
+            <ul>
+                @foreach (var line in order.Details)
+                {
+                    <li>@line.ProductName — @line.Quantity × S/ @line.UnitPrice.ToString("N2") = S/ @line.Subtotal.ToString("N2")</li>
+                }
+            </ul>
+        </article>
+    }
+}
+
+<a asp-page="/Catalog" class="back-link">← Volver al catálogo</a>

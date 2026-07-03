@@ -1,0 +1,126 @@
+@page
+@model CartModel
+@{
+    ViewData["Title"] = "Carrito";
+}
+
+<div class="page-header">
+    <h1>Carrito de compras</h1>
+    <p>Revisa tus productos y confirma el pedido.</p>
+</div>
+
+@if (TempData["Error"] is string error)
+{
+    <div class="alert alert-error">@error</div>
+}
+
+@if (!Model.IsLoggedIn)
+{
+    <div class="login-notice">
+        Para confirmar tu pedido debes <a asp-page="/Account/Login" asp-route-returnUrl="/Cart">iniciar sesión</a>
+        o <a asp-page="/Account/Register">crear una cuenta</a>.
+    </div>
+}
+
+<div class="cart-layout">
+    <section class="cart-panel">
+        <table class="cart-table">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Precio</th>
+                    <th>Cant.</th>
+                    <th>Subtotal</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="cartBody">
+                @if (Model.Lines.Count == 0)
+                {
+                    <tr><td colspan="5">El carrito está vacío.</td></tr>
+                }
+                else
+                {
+                    @foreach (var line in Model.Lines)
+                    {
+                        <tr data-id="@line.ProductId">
+                            <td>@line.ProductName</td>
+                            <td>S/ @line.UnitPrice.ToString("N2")</td>
+                            <td>@line.Quantity</td>
+                            <td>S/ @line.Subtotal.ToString("N2")</td>
+                            <td><button type="button" class="btn btn-outline btn-sm btn-remove" data-id="@line.ProductId">Quitar</button></td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </section>
+
+    <aside class="totals-panel">
+        <h2>Resumen</h2>
+        <div class="total-row"><span>Subtotal</span><span>S/ <span id="lblSubtotal">@Model.Subtotal.ToString("N2")</span></span></div>
+        <div class="total-row"><span>IGV (18%)</span><span>S/ <span id="lblTax">@Model.Tax.ToString("N2")</span></span></div>
+        <div class="total-row grand"><span>Total</span><span>S/ <span id="lblTotal">@Model.Total.ToString("N2")</span></span></div>
+
+        @if (Model.IsLoggedIn)
+        {
+            <form method="post" asp-page-handler="Checkout" style="margin-top:1rem">
+                <button type="submit" id="btnCheckout" class="btn btn-primary btn-block" @(Model.Lines.Count == 0 ? "disabled" : null)>
+                    Confirmar pedido
+                </button>
+            </form>
+        }
+        else
+        {
+            <a asp-page="/Account/Login" asp-route-returnUrl="/Cart" class="btn btn-primary btn-block" style="margin-top:1rem">
+                Iniciar sesión para comprar
+            </a>
+        }
+    </aside>
+</div>
+
+<a asp-page="/Catalog" class="back-link">← Seguir comprando</a>
+
+@section Scripts {
+<script>
+    async function refreshCart() {
+        const response = await fetch('?handler=Summary');
+        const data = await response.json();
+        const body = document.getElementById('cartBody');
+
+        if (data.lines.length === 0) {
+            body.innerHTML = '<tr><td colspan="5">El carrito está vacío.</td></tr>';
+        } else {
+            body.innerHTML = data.lines.map(l => `
+                <tr data-id="${l.productId}">
+                    <td>${l.productName}</td>
+                    <td>S/ ${Number(l.unitPrice).toFixed(2)}</td>
+                    <td>${l.quantity}</td>
+                    <td>S/ ${Number(l.subtotal).toFixed(2)}</td>
+                    <td><button type="button" class="btn btn-outline btn-sm btn-remove" data-id="${l.productId}">Quitar</button></td>
+                </tr>
+            `).join('');
+            bindRemoveButtons();
+        }
+
+        document.getElementById('lblSubtotal').textContent = Number(data.subtotal).toFixed(2);
+        document.getElementById('lblTax').textContent = Number(data.tax).toFixed(2);
+        document.getElementById('lblTotal').textContent = Number(data.total).toFixed(2);
+    }
+
+    function bindRemoveButtons() {
+        document.querySelectorAll('.btn-remove').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                await fetch('?handler=Remove', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId: Number(btn.dataset.id) })
+                });
+                await refreshCart();
+            });
+        });
+    }
+
+    bindRemoveButtons();
+</script>
+}

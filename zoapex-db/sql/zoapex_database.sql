@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS customer (
     email       VARCHAR(120) UNIQUE,
     phone       VARCHAR(15),
     address     VARCHAR(200),
+    password_hash VARCHAR(512),
     status      SMALLINT     NOT NULL DEFAULT 1
 );
 

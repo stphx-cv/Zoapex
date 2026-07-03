@@ -1,0 +1,44 @@
+@page
+@model Zoapex.Web.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Iniciar sesión";
+}
+
+<section class="auth-card">
+    <div class="auth-header">
+        <span class="auth-icon">🐾</span>
+        <h1>Bienvenido de vuelta</h1>
+        <p>Inicia sesión para comprar y ver tus pedidos.</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-error">@Model.ErrorMessage</div>
+    }
+
+    <form method="post" class="auth-form">
+        <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+
+        <label>
+            Correo electrónico
+            <input asp-for="Email" type="email" placeholder="tu@correo.com" required />
+        </label>
+
+        <label>
+            Contraseña
+            <input asp-for="Password" type="password" placeholder="••••••••" required />
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-block">Iniciar sesión</button>
+    </form>
+
+    <p class="auth-footer">
+        ¿No tienes cuenta? <a asp-page="/Account/Register">Regístrate aquí</a>
+    </p>
+
+    <div class="demo-box">
+        <strong>Cuenta demo</strong>
+        <p>Correo: <code>cliente@zoapex.com</code></p>
+        <p>Contraseña: <code>zoapex123</code></p>
+    </div>
+</section>

@@ -1,0 +1,57 @@
+@page
+@model Zoapex.Web.Pages.Account.RegisterModel
+@{
+    ViewData["Title"] = "Crear cuenta";
+}
+
+<section class="auth-card">
+    <div class="auth-header">
+        <span class="auth-icon">🐶</span>
+        <h1>Únete a Zoapex</h1>
+        <p>Crea tu cuenta de cliente y empieza a comprar.</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-error">@Model.ErrorMessage</div>
+    }
+
+    <form method="post" class="auth-form">
+        <div class="form-row">
+            <label>
+                Nombre
+                <input asp-for="FirstName" placeholder="María" required />
+            </label>
+            <label>
+                Apellido
+                <input asp-for="LastName" placeholder="López" required />
+            </label>
+        </div>
+
+        <label>
+            Correo electrónico
+            <input asp-for="Email" type="email" placeholder="tu@correo.com" required />
+        </label>
+
+        <label>
+            Contraseña
+            <input asp-for="Password" type="password" placeholder="Mínimo 6 caracteres" required />
+        </label>
+
+        <label>
+            Teléfono <span class="optional">(opcional)</span>
+            <input asp-for="Phone" placeholder="999 888 777" />
+        </label>
+
+        <label>
+            Dirección <span class="optional">(opcional)</span>
+            <input asp-for="Address" placeholder="Av. Larco 123" />
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-block">Crear cuenta</button>
+    </form>
+
+    <p class="auth-footer">
+        ¿Ya tienes cuenta? <a asp-page="/Account/Login">Inicia sesión</a>
+    </p>
+</section>

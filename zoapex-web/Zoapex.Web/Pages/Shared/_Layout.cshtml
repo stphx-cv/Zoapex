@@ -1,5 +1,9 @@
+@using Zoapex.Web.Data
 @{
     var titulo = ViewData["Title"] as string ?? "Zoapex";
+    var isLoggedIn = CustomerSession.IsLoggedIn(Context.Session);
+    var customerName = CustomerSession.GetCustomerName(Context.Session);
+    var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
 }
 <!DOCTYPE html>
 <html lang="es">
@@ -7,21 +11,55 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@titulo - Zoapex</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/site.css" />
 </head>
 <body>
-    <nav>
-        <a asp-page="/Index">Inicio</a>
-    </nav>
-    <hr />
+    <header class="site-header">
+        <div class="container header-inner">
+            <a class="brand" asp-page="/Index">
+                <span class="brand-icon">🐾</span>
+                <span class="brand-text">Zoapex</span>
+            </a>
 
-    <main role="main">
+            <nav class="main-nav">
+                <a asp-page="/Index" class="@(currentPage == "/Index" ? "active" : "")">Inicio</a>
+                <a asp-page="/Catalog" class="@(currentPage == "/Catalog" ? "active" : "")">Catálogo</a>
+                <a asp-page="/Cart" class="@(currentPage == "/Cart" ? "active" : "")">Carrito</a>
+                @if (isLoggedIn)
+                {
+                    <a asp-page="/Orders" class="@(currentPage == "/Orders" ? "active" : "")">Mis pedidos</a>
+                }
+            </nav>
+
+            <div class="header-actions">
+                @if (isLoggedIn)
+                {
+                    <span class="user-greeting">Hola, @customerName</span>
+                    <form method="post" asp-page="/Account/Logout" class="inline-form">
+                        <button type="submit" class="btn btn-outline btn-sm">Salir</button>
+                    </form>
+                }
+                else
+                {
+                    <a asp-page="/Account/Login" class="btn btn-outline btn-sm">Iniciar sesión</a>
+                    <a asp-page="/Account/Register" class="btn btn-primary btn-sm">Registrarse</a>
+                }
+            </div>
+        </div>
+    </header>
+
+    <main class="site-main container" role="main">
         @RenderBody()
     </main>
 
-    <hr />
-    <footer>
-        Desarrollo de Aplicaciones Básico — Zoapex
+    <footer class="site-footer">
+        <div class="container footer-inner">
+            <p><strong>Zoapex</strong> — Tienda de mascotas</p>
+            <p class="footer-meta">Desarrollo de Aplicaciones Básico · Stephano Camarena Villa</p>
+        </div>
     </footer>
 
     @await RenderSectionAsync("Scripts", required: false)

@@ -1,0 +1,149 @@
+@page
+@model CatalogModel
+@{
+    ViewData["Title"] = "Catálogo";
+}
+
+<div class="page-header">
+    <h1>Catálogo de productos</h1>
+    <p>Busca, filtra y agrega productos al carrito sin recargar la página.</p>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.DbError))
+{
+    <div class="alert alert-error">
+        <strong>No se pudo conectar a la base de datos.</strong>
+        <p>@Model.DbError</p>
+        <p>Verifica que tu proyecto Supabase esté activo (no pausado) en el dashboard y que la cadena de conexión en <code>appsettings.json</code> sea la correcta.</p>
+    </div>
+}
+
+<div class="catalog-layout">
+    <div class="catalog-main">
+        <div class="filters-bar">
+            <label>
+                Buscar
+                <input type="search" id="searchInput" placeholder="Nombre, código o categoría..." />
+            </label>
+            <label>
+                Categoría
+                <select id="categoryFilter">
+                    <option value="">Todas</option>
+                    @foreach (var cat in Model.Categories)
+                    {
+                        <option value="@cat.CategoryId">@cat.Name</option>
+                    }
+                </select>
+            </label>
+        </div>
+
+        <section id="productGrid" class="product-grid">
+            <div class="empty-state">Cargando productos...</div>
+        </section>
+    </div>
+
+    <aside id="productDetail" class="product-detail-panel hidden">
+        <h2>Detalle del producto</h2>
+        <span class="badge" id="detailCategory">—</span>
+        <h3 id="detailName" style="margin:0.5rem 0 0">—</h3>
+        <p class="code" id="detailCode">—</p>
+
+        <div class="detail-price">S/ <span id="detailPrice">0.00</span></div>
+
+        <div class="detail-row"><strong>Stock</strong> <span id="detailStock">0</span> unidades</div>
+
+        <label>
+            Cantidad
+            <input type="number" id="detailQty" min="1" value="1" />
+        </label>
+
+        <button type="button" id="btnAddToCart" class="btn btn-accent btn-block">Agregar al carrito</button>
+        <p id="addMessage" class="message" style="margin-top:0.75rem"></p>
+    </aside>
+</div>
+
+@section Scripts {
+<script>
+    const grid = document.getElementById('productGrid');
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const detailPanel = document.getElementById('productDetail');
+    let selectedProductId = 0;
+
+    async function loadProducts() {
+        const q = encodeURIComponent(searchInput.value.trim());
+        const categoryId = categoryFilter.value;
+        const url = `?handler=Search&q=${q}&categoryId=${categoryId}`;
+
+        try {
+            const response = await fetch(url);
+            const products = await response.json();
+
+            if (products.error) {
+                grid.innerHTML = `<div class="empty-state">${products.message}</div>`;
+                return;
+            }
+
+            if (!products.length) {
+                grid.innerHTML = '<div class="empty-state">No se encontraron productos.</div>';
+                return;
+            }
+
+            grid.innerHTML = products.map(p => `
+                <article class="product-card">
+                    <span class="badge">${p.categoryName}</span>
+                    <p class="code">${p.code}</p>
+                    <h3>${p.name}</h3>
+                    <p class="desc">${p.description || 'Sin descripción'}</p>
+                    <p class="meta">S/ ${Number(p.price).toFixed(2)} · Stock: ${p.stock}</p>
+                    <button type="button" class="btn btn-outline btn-sm btn-select" data-id="${p.productId}">Ver detalle</button>
+                </article>
+            `).join('');
+
+            grid.querySelectorAll('.btn-select').forEach(btn => {
+                btn.addEventListener('click', () => showProductDetail(btn.dataset.id));
+            });
+        } catch {
+            grid.innerHTML = '<div class="empty-state">Error al cargar productos. Revisa la conexión a la base de datos.</div>';
+        }
+    }
+
+    async function showProductDetail(id) {
+        const response = await fetch(`?handler=Product&id=${id}`);
+        const data = await response.json();
+        if (!data.found) {
+            detailPanel.classList.add('hidden');
+            return;
+        }
+
+        selectedProductId = data.productId;
+        document.getElementById('detailName').textContent = data.name;
+        document.getElementById('detailCode').textContent = data.code;
+        document.getElementById('detailCategory').textContent = data.categoryName;
+        document.getElementById('detailPrice').textContent = Number(data.price).toFixed(2);
+        document.getElementById('detailStock').textContent = data.stock;
+        document.getElementById('detailQty').max = data.stock;
+        document.getElementById('detailQty').value = 1;
+        document.getElementById('addMessage').textContent = '';
+        detailPanel.classList.remove('hidden');
+    }
+
+    document.getElementById('btnAddToCart').addEventListener('click', async () => {
+        const qty = Number(document.getElementById('detailQty').value);
+        const response = await fetch('/Cart?handler=Add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId: selectedProductId, quantity: qty })
+        });
+
+        const result = await response.json();
+        const msg = document.getElementById('addMessage');
+        msg.textContent = result.message;
+        msg.className = result.ok ? 'message ok' : 'message error';
+    });
+
+    searchInput.addEventListener('input', loadProducts);
+    categoryFilter.addEventListener('change', loadProducts);
+    loadProducts();
+</script>
+}
