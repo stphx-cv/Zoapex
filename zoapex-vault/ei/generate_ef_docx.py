@@ -259,19 +259,30 @@ def build_examen_final(doc: Document):
 
     # ---- Parte C ----
     add_heading(doc, "C. Seguridad (opcional — puntos extra)", level=2)
-    add_bullet(doc, "Roles Admin / Cliente: columna 'role' en customer; el rol se guarda en la sesión al iniciar sesión.")
-    add_bullet(doc, "Reglas de acceso: la página y el handler de exportación solo los ve el Administrador (guardia CustomerSession.IsAdmin); el enlace 'Reporte' del menú solo aparece para Admin.")
-    add_bullet(doc, "Formulario de Login (/Account/Login) con validación de credenciales y hash de contraseña (PasswordHelper).")
-    add_bullet(doc, "Caducidad de sesión (timeout): IdleTimeout de 30 minutos configurado en Program.cs.")
+    add_body(
+        doc,
+        "La seguridad se implementó con el enfoque actual de ASP.NET Core Razor Pages: autenticación "
+        "por cookie, autorización por políticas y roles, y convenciones de acceso por página (sin el "
+        "antiguo proveedor Membership ni reglas por Web.config). Los cuatro puntos de la Parte C están "
+        "cubiertos:",
+    )
+    add_bullet(doc, "Roles por claims: el usuario se autentica con SignInAsync y su identidad se firma en una cookie cifrada; el nombre y el rol (Admin / Cliente, tomado de la columna 'role' de customer) viajan como claims. La lógica está en Data/CustomerIdentity.cs.")
+    add_bullet(doc, "Reglas de acceso a las páginas del sitio: se centralizan en Program.cs con convenciones y políticas — AuthorizePage(\"/SalesReport\", \"EsAdmin\") con política RequireRole(\"Admin\"), y AuthorizePage(\"/Orders\") que exige autenticación. En el menú (_Layout) el enlace 'Reporte' solo aparece con User.IsInRole(\"Admin\").")
+    add_bullet(doc, "Formulario de Login (/Account/Login): valida las credenciales contra el hash de contraseña (PasswordHelper con PasswordHasher) y, si son correctas, firma la cookie con los claims; el Logout borra la cookie con SignOutAsync.")
+    add_bullet(doc, "Caducidad de la sesión: parte servidor — la cookie expira con ExpireTimeSpan (30 min) y SlidingExpiration (se renueva con la actividad); parte cliente — un JavaScript en el _Layout detecta la inactividad, avisa y luego redirige a /Account/Logout para cerrar la sesión. Los minutos de aviso y de cierre se configuran en appsettings.json (sección Security).")
     add_body(doc, "Cuentas demo — Admin: admin@zoapex.com / zoapex123 · Cliente: cliente@zoapex.com / zoapex123.", space_after=8)
-    add_placeholder(doc, "[CAPTURA C-1: menú 'Reporte' visible con la cuenta Admin, y acceso denegado / redirección a Login con la cuenta Cliente]")
+    add_placeholder(doc, "[CAPTURA C-1: configuración de autenticación por cookie y las convenciones AuthorizePage/política EsAdmin en Program.cs]")
+    add_placeholder(doc, "[CAPTURA C-2: método OnPostAsync de Login.cshtml.cs — SignInAsync con los claims (nombre, rol e Id)]")
+    add_placeholder(doc, "[CAPTURA C-3: menú 'Reporte' visible con la cuenta Admin, y acceso denegado / redirección a Login con la cuenta Cliente]")
 
     # ---- Verificación ----
     add_heading(doc, "Verificación realizada (de punta a punta)", level=2)
     add_bullet(doc, "dotnet build → compila sin errores.")
-    add_bullet(doc, "Login como admin@zoapex.com → /SalesReport responde HTTP 200 con KPIs, gráfico y tablas.")
+    add_bullet(doc, "Login como admin@zoapex.com → se emite la cookie de autenticación y /SalesReport responde HTTP 200 con KPIs, gráfico y tablas.")
+    add_bullet(doc, "Login como cliente@zoapex.com → /SalesReport responde HTTP 302 (acceso denegado por rol), mientras que /Orders sí responde 200.")
     add_bullet(doc, "Botón Descargar Excel → descarga un .xlsx real (hojas 'Resumen' y 'Detalle de pedidos', con gráfico y autofiltro).")
-    add_bullet(doc, "Acceso sin sesión a /SalesReport y al handler Export → HTTP 302 hacia el Login (regla de acceso por rol funcionando).")
+    add_bullet(doc, "Acceso sin sesión a /SalesReport y /Orders → HTTP 302 hacia el Login (reglas de acceso por convención funcionando).")
+    add_bullet(doc, "Credenciales incorrectas → la página de Login se recarga con el mensaje de error y no se emite ninguna cookie.")
 
     # ---- Entregable ----
     add_heading(doc, "Entregable", level=2)

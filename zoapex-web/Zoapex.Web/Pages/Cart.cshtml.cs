@@ -17,8 +17,8 @@ public class CartModel(CatalogRepository catalogRepo, OrderRepository orderRepo)
 
     public void OnGet()
     {
-        IsLoggedIn = CustomerSession.IsLoggedIn(HttpContext.Session);
-        CustomerName = CustomerSession.GetCustomerName(HttpContext.Session);
+        IsLoggedIn = User.Identity?.IsAuthenticated == true;
+        CustomerName = User.Identity?.Name;
         RefreshTotals();
     }
 
@@ -95,7 +95,7 @@ public class CartModel(CatalogRepository catalogRepo, OrderRepository orderRepo)
 
     public async Task<IActionResult> OnPostCheckoutAsync()
     {
-        var customerId = CustomerSession.GetCustomerId(HttpContext.Session);
+        var customerId = User.GetCustomerId();
         if (customerId is null)
             return RedirectToPage("/Account/Login", new { returnUrl = "/Cart" });
 

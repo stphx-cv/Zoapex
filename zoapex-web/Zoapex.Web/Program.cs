@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 
@@ -6,7 +7,35 @@ var builder = WebApplication.CreateBuilder(args);
 // Licencia EPPlus (uso académico / no comercial)
 ExcelPackage.License.SetNonCommercialPersonal("Stephano Camarena Villa");
 
-builder.Services.AddRazorPages();
+// Minutos de caducidad de la sesión (configurables en appsettings.json)
+var timeoutMin = builder.Configuration.GetValue("Security:SessionTimeoutMinutes", 30);
+
+// Autenticación por cookie (reemplaza al esquema basado en ISession)
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.LogoutPath = "/Account/Logout";
+        options.AccessDeniedPath = "/Account/Login";
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(timeoutMin);
+        options.SlidingExpiration = true;   // la cookie se renueva con la actividad
+        options.Cookie.HttpOnly = true;
+        options.Cookie.IsEssential = true;
+    });
+
+// Políticas de autorización por rol (reemplazan al roleManager del stack antiguo)
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("EsAdmin", policy => policy.RequireRole("Admin"));
+});
+
+// Reglas de acceso a las páginas del sitio (convenciones de Razor Pages).
+// El resto de páginas queda anónimo (catálogo y carrito son públicos).
+builder.Services.AddRazorPages(options =>
+{
+    options.Conventions.AuthorizePage("/Orders");              // requiere haber iniciado sesión
+    options.Conventions.AuthorizePage("/SalesReport", "EsAdmin"); // solo administrador
+});
 builder.Services.AddDbContext<Zoapex.Web.Data.ZoapexDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("ZoapexDb"),
@@ -47,8 +76,9 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-app.UseSession();
-app.UseAuthorization();
+app.UseSession();          // el carrito de invitado sigue viviendo en la sesión
+app.UseAuthentication();   // primero se autentica (quién es)
+app.UseAuthorization();    // luego se autoriza (qué puede hacer)
 app.MapRazorPages();
 
 app.Run();

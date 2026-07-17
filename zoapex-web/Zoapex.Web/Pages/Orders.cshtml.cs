@@ -11,11 +11,12 @@ public class OrdersModel(OrderRepository orderRepo) : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        var customerId = CustomerSession.GetCustomerId(HttpContext.Session);
+        // La página exige autenticación (convención en Program.cs); igual validamos el claim
+        var customerId = User.GetCustomerId();
         if (customerId is null)
             return RedirectToPage("/Account/Login", new { returnUrl = "/Orders" });
 
-        CustomerName = CustomerSession.GetCustomerName(HttpContext.Session);
+        CustomerName = User.Identity?.Name;
         Orders = await orderRepo.GetCustomerOrdersAsync(customerId.Value);
         return Page();
     }

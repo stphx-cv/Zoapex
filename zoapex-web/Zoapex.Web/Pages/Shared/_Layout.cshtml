@@ -1,9 +1,12 @@
 @using Zoapex.Web.Data
+@inject IConfiguration Config
 @{
     var titulo = ViewData["Title"] as string ?? "Zoapex";
-    var isLoggedIn = CustomerSession.IsLoggedIn(Context.Session);
-    var customerName = CustomerSession.GetCustomerName(Context.Session);
+    var isLoggedIn = User.Identity?.IsAuthenticated == true;
+    var customerName = User.Identity?.Name;
     var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+    var warnMin = Config.GetValue("Security:SessionWarningMinutes", 25);
+    var timeoutMin = Config.GetValue("Security:SessionTimeoutMinutes", 30);
 }
 <!DOCTYPE html>
 <html lang="es">
@@ -32,7 +35,7 @@
                 {
                     <a asp-page="/Orders" class="@(currentPage == "/Orders" ? "active" : "")">Mis pedidos</a>
                 }
-                @if (CustomerSession.IsAdmin(Context.Session))
+                @if (User.IsInRole("Admin"))
                 {
                     <a asp-page="/SalesReport" class="@(currentPage == "/SalesReport" ? "active" : "")">Reporte</a>
                 }
@@ -67,5 +70,40 @@
     </footer>
 
     @await RenderSectionAsync("Scripts", required: false)
+
+    @if (isLoggedIn)
+    {
+        <script>
+            // Caducidad de sesión por inactividad (parte cliente).
+            // La cookie expira en el servidor; aquí avisamos y luego cerramos sesión.
+            (function () {
+                const avisoMs = @(warnMin) * 60 * 1000;
+                const cierreMs = @(timeoutMin) * 60 * 1000;
+                let avisoTimer, cierreTimer, avisado = false;
+
+                function programar() {
+                    clearTimeout(avisoTimer);
+                    clearTimeout(cierreTimer);
+                    avisado = false;
+                    avisoTimer = setTimeout(function () {
+                        avisado = true;
+                        alert("Tu sesión está por expirar por inactividad.");
+                    }, avisoMs);
+                    cierreTimer = setTimeout(function () {
+                        window.location = "/Account/Logout"; // cierra sesión y vuelve al login
+                    }, cierreMs);
+                }
+
+                // Cualquier actividad del usuario reinicia el conteo
+                ["mousemove", "keydown", "scroll", "click"].forEach(function (evt) {
+                    document.addEventListener(evt, function () {
+                        if (!avisado) programar();
+                    }, { passive: true });
+                });
+
+                programar();
+            })();
+        </script>
+    }
 </body>
 </html>

@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Zoapex.Web.Data;
@@ -15,17 +17,20 @@ public class LoginModel(CustomerRepository customerRepo) : PageModel
     public string? ReturnUrl { get; set; }
     public string? ErrorMessage { get; set; }
 
-    public void OnGet(string? returnUrl)
+    public IActionResult OnGet(string? returnUrl)
     {
-        ReturnUrl = string.IsNullOrWhiteSpace(returnUrl) ? "/Catalog" : returnUrl;
+        ReturnUrl = SafeReturnUrl(returnUrl);
 
-        if (CustomerSession.IsLoggedIn(HttpContext.Session))
-            Response.Redirect(ReturnUrl);
+        // Si ya inició sesión, no tiene sentido mostrar el login
+        if (User.Identity?.IsAuthenticated == true)
+            return LocalRedirect(ReturnUrl);
+
+        return Page();
     }
 
     public async Task<IActionResult> OnPostAsync(string? returnUrl)
     {
-        ReturnUrl = string.IsNullOrWhiteSpace(returnUrl) ? "/Catalog" : returnUrl;
+        ReturnUrl = SafeReturnUrl(returnUrl);
 
         var customer = await customerRepo.ValidateLoginAsync(Email, Password);
         if (customer is null)
@@ -34,13 +39,18 @@ public class LoginModel(CustomerRepository customerRepo) : PageModel
             return Page();
         }
 
-        CustomerSession.SignIn(
-            HttpContext.Session,
-            customer.CustomerId,
-            customer.FullName,
-            customer.Email ?? Email,
-            customer.Role);
+        // Firma la cookie de autenticación con el nombre, correo, rol e Id del cliente
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            CustomerIdentity.Build(customer),
+            new AuthenticationProperties { IsPersistent = false });
 
-        return Redirect(ReturnUrl);
+        return LocalRedirect(ReturnUrl);
     }
+
+    // Evita open-redirect: solo se permiten rutas locales
+    private string SafeReturnUrl(string? returnUrl)
+        => !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
+            ? returnUrl
+            : "/Catalog";
 }

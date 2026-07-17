@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Zoapex.Web.Data;
@@ -26,10 +28,11 @@ public class RegisterModel(CustomerRepository customerRepo) : PageModel
 
     public string? ErrorMessage { get; set; }
 
-    public void OnGet()
+    public IActionResult OnGet()
     {
-        if (CustomerSession.IsLoggedIn(HttpContext.Session))
-            Response.Redirect("/Catalog");
+        if (User.Identity?.IsAuthenticated == true)
+            return RedirectToPage("/Catalog");
+        return Page();
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -39,12 +42,11 @@ public class RegisterModel(CustomerRepository customerRepo) : PageModel
             var customer = await customerRepo.RegisterAsync(
                 FirstName, LastName, Email, Password, Phone, Address);
 
-            CustomerSession.SignIn(
-                HttpContext.Session,
-                customer.CustomerId,
-                customer.FullName,
-                customer.Email ?? Email,
-                customer.Role);
+            // Inicia sesión automáticamente firmando la cookie con sus claims
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                CustomerIdentity.Build(customer),
+                new AuthenticationProperties { IsPersistent = false });
 
             return RedirectToPage("/Catalog");
         }
