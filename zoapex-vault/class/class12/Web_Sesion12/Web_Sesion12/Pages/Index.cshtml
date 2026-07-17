@@ -1,0 +1,49 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Inicio";
+}
+
+<div class="vl-hero">
+    <h1>VentasLeon</h1>
+    <p class="lead">Sesion 12 · Acceso a datos con Entity Framework Core y LINQ, y AJAX en ASP.NET Core.</p>
+    <p>Tres ejemplos sobre la misma base de datos: consultas con LINQ, procedimientos almacenados y actualizacion de la pagina sin recargar.</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card vl-card">
+            <div class="card-body">
+                <span class="num">1</span>
+                <h5 class="card-title">Consulta con LINQ</h5>
+                <p class="text-muted">Deuda de un cliente y sus facturas entre dos fechas, usando LINQ to Entities sobre EF Core.</p>
+                <a class="btn btn-vl btn-sm" asp-page="/Consulta">Abrir ejemplo</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card vl-card">
+            <div class="card-body">
+                <span class="num">2</span>
+                <h5 class="card-title">Procedimiento almacenado</h5>
+                <p class="text-muted">El mismo resultado, pero ejecutando procedimientos almacenados desde EF Core (FromSql y parametro de salida).</p>
+                <a class="btn btn-vl btn-sm" asp-page="/Procedimiento">Abrir ejemplo</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card vl-card">
+            <div class="card-body">
+                <span class="num">3</span>
+                <h5 class="card-title">AJAX moderno</h5>
+                <p class="text-muted">Buscar un cliente "en vivo" y refrescar solo el panel, sin recargar la pagina (fetch + handler JSON).</p>
+                <a class="btn btn-vl btn-sm" asp-page="/Ajax">Abrir ejemplo</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="vl-nota">
+    Antes de probar, ejecute una sola vez el script <strong>VentasLeon.sql</strong> en SQL Server
+    para crear la base de datos, los datos de ejemplo y los procedimientos almacenados.
+</div>

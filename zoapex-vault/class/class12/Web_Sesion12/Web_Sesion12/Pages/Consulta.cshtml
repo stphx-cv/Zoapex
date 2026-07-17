@@ -1,0 +1,70 @@
+@page
+@model ConsultaModel
+@{
+    ViewData["Title"] = "Consulta LINQ";
+}
+
+<div class="panel">
+    <p class="tituloForm">Ejemplo 1 · Consulta con LINQ (EF Core)</p>
+
+    <form method="post">
+        <div asp-validation-summary="All" class="text-danger mb-2"></div>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label asp-for="Codigo" class="form-label">Codigo de cliente</label>
+                <input asp-for="Codigo" class="form-control" placeholder="C001" />
+                <span asp-validation-for="Codigo" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="FechaInicio" class="form-label">Desde</label>
+                <input asp-for="FechaInicio" type="date" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="FechaFin" class="form-label">Hasta</label>
+                <input asp-for="FechaFin" type="date" class="form-control" />
+            </div>
+        </div>
+        <button type="submit" class="btn btn-vl mt-3">Consultar</button>
+    </form>
+
+    @if (Model.Consultado)
+    {
+        <div class="resultado mt-3">
+            Deuda actual del cliente (facturas pendientes):
+            <strong>S/ @Model.Deuda.ToString("0.00")</strong>
+        </div>
+
+        @if (Model.Facturas.Count > 0)
+        {
+            <table class="table tabla-vl mt-3">
+                <thead>
+                    <tr><th>N° Factura</th><th>Fecha</th><th>Estado</th><th class="text-end">Total</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var f in Model.Facturas)
+                    {
+                        <tr>
+                            <td>@f.NumFac</td>
+                            <td>@f.FecFac.ToString("dd/MM/yyyy")</td>
+                            <td>@f.EstadoTexto</td>
+                            <td class="text-end">S/ @(f.Detalles.Sum(d => d.CanVen * d.PreVen).ToString("0.00"))</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="vl-nota mt-3">No se encontraron facturas para ese cliente en el rango indicado.</div>
+        }
+    }
+
+    <div class="vl-nota">
+        La pagina llama a la capa de datos (<strong>VentasRepositorio</strong>), que consulta con LINQ.
+        La vista nunca habla directo con la base de datos.
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

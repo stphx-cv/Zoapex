@@ -1,0 +1,110 @@
+@page
+@model PaginacionModel
+@{
+    ViewData["Title"] = "Paginacion";
+}
+
+<div class="panel">
+    <p class="tituloForm">Ejemplo 3 · Paginacion (local con Skip/Take y con procedimiento almacenado)</p>
+
+    <p class="text-muted">
+        El listado de facturas se muestra por p&aacute;ginas de @Model.Tam en @Model.Tam. Elija la forma
+        de paginar: en memoria con LINQ (<strong>Skip/Take</strong>) o dejando que la base de datos
+        devuelva solo la p&aacute;gina con un procedimiento almacenado (<strong>OFFSET/FETCH</strong>).
+    </p>
+
+    <!-- selector de modo: mantiene la pagina en 1 al cambiar -->
+    <div class="vl-modo">
+        <a class="@(Model.Modo == "local" ? "activo" : "")"
+           asp-page="/Paginacion" asp-route-modo="local" asp-route-pagina="1">Local (Skip/Take)</a>
+        <a class="@(Model.Modo == "sp" ? "activo" : "")"
+           asp-page="/Paginacion" asp-route-modo="sp" asp-route-pagina="1">Procedimiento (OFFSET/FETCH)</a>
+    </div>
+
+    <table class="table tabla-vl">
+        <thead>
+            <tr>
+                <th>N&deg; Factura</th>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Vendedor</th>
+                <th>Estado</th>
+                <th class="text-end">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Modo == "sp")
+            {
+                @foreach (var f in Model.FacturasSp)
+                {
+                    <tr>
+                        <td>@f.Num_fac</td>
+                        <td>@f.Fec_fac.ToString("dd/MM/yyyy")</td>
+                        <td>@f.Cliente</td>
+                        <td>@f.Vendedor</td>
+                        <td>@f.Estado</td>
+                        <td class="text-end">S/ @f.Total.ToString("0.00")</td>
+                    </tr>
+                }
+            }
+            else
+            {
+                @foreach (var f in Model.FacturasLocal)
+                {
+                    <tr>
+                        <td>@f.NumFac</td>
+                        <td>@f.FecFac.ToString("dd/MM/yyyy")</td>
+                        <td>@(f.Cliente?.RazSocCli)</td>
+                        <td>@(f.Vendedor?.NomVen) @(f.Vendedor?.ApeVen)</td>
+                        <td>@f.EstadoTexto</td>
+                        <td class="text-end">S/ @(f.Detalles.Sum(d => d.CanVen * d.PreVen).ToString("0.00"))</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+
+    <!-- paginador: cada enlace conserva el modo actual y cambia la pagina -->
+    <nav class="vl-pager">
+        @if (Model.Pagina > 1)
+        {
+            <a asp-page="/Paginacion" asp-route-modo="@Model.Modo" asp-route-pagina="@(Model.Pagina - 1)">&laquo;</a>
+        }
+        else
+        {
+            <span class="actual deshab">&laquo;</span>
+        }
+
+        @for (int i = 1; i <= Model.TotalPaginas; i++)
+        {
+            if (i == Model.Pagina)
+            {
+                <span class="actual">@i</span>
+            }
+            else
+            {
+                <a asp-page="/Paginacion" asp-route-modo="@Model.Modo" asp-route-pagina="@i">@i</a>
+            }
+        }
+
+        @if (Model.Pagina < Model.TotalPaginas)
+        {
+            <a asp-page="/Paginacion" asp-route-modo="@Model.Modo" asp-route-pagina="@(Model.Pagina + 1)">&raquo;</a>
+        }
+        else
+        {
+            <span class="actual deshab">&raquo;</span>
+        }
+    </nav>
+
+    <p class="text-muted mt-2">
+        P&aacute;gina @Model.Pagina de @Model.TotalPaginas &middot; @Model.Total facturas en total.
+    </p>
+
+    <div class="vl-nota">
+        Las dos formas dan el mismo resultado en pantalla. La diferencia est&aacute; en d&oacute;nde se
+        recorta: en <strong>local</strong> EF Core traduce Skip/Take a OFFSET/FETCH; con el
+        <strong>procedimiento</strong>, es la base de datos la que devuelve solo las filas de la
+        p&aacute;gina pedida. Para vol&uacute;menes grandes, se recomienda el procedimiento.
+    </div>
+</div>

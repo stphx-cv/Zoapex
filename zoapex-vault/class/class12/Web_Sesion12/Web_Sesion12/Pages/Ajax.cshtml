@@ -1,0 +1,134 @@
+@page
+@model AjaxModel
+@{
+    ViewData["Title"] = "AJAX moderno";
+}
+
+<div class="panel">
+    <p class="tituloForm">Ejemplo 3 · AJAX moderno (fetch + EF Core)</p>
+
+    <!-- No hay <form method=post>: todo se resuelve sin recargar la pagina -->
+    <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Codigo de cliente</label>
+            <input id="codigo" class="form-control" placeholder="C001" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Desde</label>
+            <input id="desde" type="date" class="form-control" value="2025-01-01" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Hasta</label>
+            <input id="hasta" type="date" class="form-control" value="2025-12-31" />
+        </div>
+        <div class="col-md-3">
+            <button id="btnBuscar" type="button" class="btn btn-vl w-100">Buscar (sin recargar)</button>
+        </div>
+    </div>
+
+    <!-- Este panel se actualiza por AJAX; el resto de la pagina no se recarga -->
+    <div id="panelCliente" class="resultado mt-3" style="display:none">
+        <div><strong id="razon"></strong></div>
+        <div class="text-muted"><span id="ruc"></span> · <span id="dir"></span></div>
+        <div class="mt-2">Deuda pendiente: <strong id="deuda">S/ 0.00</strong></div>
+    </div>
+    <div id="avisoVacio" class="vl-nota mt-3" style="display:none">No se encontró un cliente con ese código.</div>
+
+    <table id="tablaFacturas" class="table tabla-vl mt-3" style="display:none">
+        <thead><tr><th>N° Factura</th><th>Fecha</th><th>Estado</th><th class="text-end">Total</th></tr></thead>
+        <tbody id="cuerpoFacturas"></tbody>
+    </table>
+
+    <hr class="my-4" />
+
+    <!-- Monto con "mascara": se formatea como soles al salir del campo (equivalente moderno del MaskedEdit) -->
+    <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label">Monto a registrar (demo de máscara)</label>
+            <input id="monto" class="form-control" inputmode="decimal" placeholder="0.00" />
+        </div>
+        <div class="col-md-4">
+            <button id="btnRegistrar" type="button" class="btn btn-outline-secondary w-100">Registrar (pide confirmación)</button>
+        </div>
+    </div>
+
+    <div class="vl-nota">
+        El botón "Buscar" llama por <strong>fetch</strong> al handler <strong>OnGetBuscarCliente</strong>,
+        que consulta la BD vía EF Core y devuelve JSON. JavaScript actualiza solo el panel, sin recargar.
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // pide los datos del cliente al servidor (handler BuscarCliente) y refresca solo el panel
+        async function buscarCliente() {
+            const codigo = document.getElementById("codigo").value.trim();
+            const desde = document.getElementById("desde").value;
+            const hasta = document.getElementById("hasta").value;
+            if (codigo === "") { alert("Ingrese un código de cliente."); return; }
+
+            // llamada AJAX al handler de la pagina: ?handler=BuscarCliente
+            const r = await fetch(`?handler=BuscarCliente&codigo=${encodeURIComponent(codigo)}`);
+            const data = await r.json();
+
+            const panel = document.getElementById("panelCliente");
+            const aviso = document.getElementById("avisoVacio");
+
+            if (!data.encontrado) {
+                panel.style.display = "none";
+                document.getElementById("tablaFacturas").style.display = "none";
+                aviso.style.display = "block";
+                return;
+            }
+
+            aviso.style.display = "none";
+            document.getElementById("razon").textContent = data.razSocCli;
+            document.getElementById("ruc").textContent = "RUC " + (data.rucCli || "-");
+            document.getElementById("dir").textContent = data.dirCli || "";
+            // formatearSoles() viene del script externo site-demo.js
+            document.getElementById("deuda").textContent = formatearSoles(data.deuda);
+            panel.style.display = "block";
+
+            // segunda llamada AJAX: trae las facturas del rango y arma la tabla
+            await cargarFacturas(codigo, desde, hasta);
+        }
+
+        // pide las facturas del rango (handler Facturas) y llena la tabla sin recargar
+        async function cargarFacturas(codigo, desde, hasta) {
+            const r = await fetch(`?handler=Facturas&codigo=${encodeURIComponent(codigo)}&ini=${desde}&fin=${hasta}`);
+            const lista = await r.json();
+            const cuerpo = document.getElementById("cuerpoFacturas");
+            const tabla = document.getElementById("tablaFacturas");
+            cuerpo.innerHTML = "";
+
+            if (!lista || lista.length === 0) { tabla.style.display = "none"; return; }
+
+            lista.forEach(f => {
+                const fila = document.createElement("tr");
+                fila.innerHTML = `<td>${f.numFac}</td><td>${f.fecha}</td><td>${f.estado}</td>` +
+                                 `<td class="text-end">${formatearSoles(f.total)}</td>`;
+                cuerpo.appendChild(fila);
+            });
+            tabla.style.display = "table";
+        }
+
+        // da formato de moneda al monto cuando el usuario sale del campo
+        function aplicarMascaraMonto() {
+            const campo = document.getElementById("monto");
+            const valor = aNumero(campo.value);
+            campo.value = valor.toFixed(2);
+        }
+
+        // pide confirmacion antes de "registrar" (equivalente moderno del mensaje de confirmacion)
+        function registrar() {
+            const monto = document.getElementById("monto").value;
+            if (confirm("¿Seguro de registrar el monto " + formatearSoles(aNumero(monto)) + "?")) {
+                alert("Registrado (demostración).");
+            }
+        }
+
+        document.getElementById("btnBuscar").addEventListener("click", buscarCliente);
+        document.getElementById("monto").addEventListener("blur", aplicarMascaraMonto);
+        document.getElementById("btnRegistrar").addEventListener("click", registrar);
+    </script>
+}

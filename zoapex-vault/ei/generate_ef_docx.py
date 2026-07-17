@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Genera el documento Word del Examen Final para Zoapex.
 
-Parte del documento de la PA4 (que ya contiene PA3 + PA4) y le agrega una
-sección más: "Examen Final — Transaccionalidad Web + Reporte a Excel".
+Parte del documento pristino de la PA4 (PA3 + PA4), elimina todos los
+bloques de código (identificados por fuente Consolas) dejando solo las
+indicaciones de captura, y agrega la sección "Evaluación Final" con el
+mismo criterio: sin código pegado, solo explicación + qué capturar.
 """
 
 from pathlib import Path
@@ -61,27 +63,108 @@ def add_bullet(doc, text):
     return p
 
 
-def add_code_block(doc, code: str):
-    for line in code.strip("\n").split("\n"):
-        p = doc.add_paragraph()
-        p.paragraph_format.space_after = Pt(0)
-        p.paragraph_format.left_indent = Inches(0.2)
-        run = p.add_run(line if line else " ")
-        run.font.name = "Consolas"
-        run._element.rPr.rFonts.set(qn("w:eastAsia"), "Consolas")
-        run.font.size = Pt(9)
-        run.font.color.rgb = RGBColor(0x1E, 0x1E, 0x1E)
-    add_paragraph(doc, "", space_after=8)
-
-
-def add_caption(doc, text):
-    p = add_paragraph(doc, text, size=10, color=RGBColor(0x66, 0x66, 0x66), space_after=10)
-    p.runs[0].font.italic = True
-    return p
-
-
 def add_placeholder(doc, text):
     return add_paragraph(doc, text, size=10, bold=True, color=RGBColor(0xE7, 0x6F, 0x51), space_after=12)
+
+
+# ---------------------------------------------------------------------
+# Limpieza: elimina bloques de código (fuente Consolas) del documento
+# base de la PA4, dejando intactas las captions y los placeholders de
+# captura que ya indican qué pantalla/archivo capturar.
+# ---------------------------------------------------------------------
+
+def _is_code_paragraph(p):
+    return len(p.runs) > 0 and p.runs[0].font.name == "Consolas"
+
+
+def _is_visually_empty(p):
+    has_drawing = bool(p._element.findall(".//" + qn("w:drawing")))
+    return not has_drawing and not p.text.strip()
+
+
+def strip_code_blocks(doc: Document):
+    paragraphs = doc.paragraphs
+    to_remove = []
+    i, n = 0, len(paragraphs)
+    while i < n:
+        if _is_code_paragraph(paragraphs[i]):
+            j = i
+            while j < n and _is_code_paragraph(paragraphs[j]):
+                to_remove.append(paragraphs[j])
+                j += 1
+            # el separador en blanco que add_code_block agregaba al final del bloque
+            if j < n and len(paragraphs[j].runs) == 0:
+                to_remove.append(paragraphs[j])
+                j += 1
+            i = j
+        else:
+            i += 1
+    for p in to_remove:
+        p._element.getparent().remove(p._element)
+    return len(to_remove)
+
+
+# Puntos donde el código ya fue eliminado (por el alumno o por strip_code_blocks)
+# y no quedó ninguna captura real insertada: se completa con UNA indicación clara.
+KNOWN_GAPS = [
+    ("Archivo: Zoapex.Web/Data/ZoapexDbContext.cs",
+     "[CAPTURA: pantalla del archivo ZoapexDbContext.cs en Visual Studio / Cursor]"),
+    ("Archivo: Zoapex.Web/Data/CatalogRepository.cs — filtro del catálogo",
+     "[CAPTURA: método GetCatalogAsync en CatalogRepository.cs]"),
+    ("Archivo: Zoapex.Web/Data/OrderRepository.cs — historial del cliente",
+     "[CAPTURA: método GetCustomerOrdersAsync en OrderRepository.cs]"),
+    ("2) Invocación desde el proyecto web (EF Core + SqlQuery)",
+     "[CAPTURA: método RegisterOrderAsync en OrderRepository.cs]"),
+]
+
+
+def fill_known_gaps(doc: Document):
+    filled = 0
+    for caption_text, placeholder_text in KNOWN_GAPS:
+        paragraphs = doc.paragraphs
+        n = len(paragraphs)
+        for i, p in enumerate(paragraphs):
+            if p.text.strip() != caption_text:
+                continue
+            j = i + 1
+            first_blank, extra = None, []
+            while j < n and _is_visually_empty(paragraphs[j]):
+                if first_blank is None:
+                    first_blank = paragraphs[j]
+                else:
+                    extra.append(paragraphs[j])
+                j += 1
+            if first_blank is not None:
+                run = first_blank.add_run(placeholder_text)
+                set_run(run, size=10, bold=True, color=RGBColor(0xE7, 0x6F, 0x51))
+                for p_rm in extra:
+                    p_rm._element.getparent().remove(p_rm._element)
+                filled += 1
+            break
+    return filled
+
+
+def collapse_blank_runs(doc: Document):
+    """Elimina corridas de 2+ párrafos vacíos consecutivos (ya sin código ni
+    captura) para que no queden huecos en blanco. Deja intactos los blancos
+    sueltos (separadores originales entre secciones) y cualquier párrafo con
+    imagen."""
+    paragraphs = doc.paragraphs
+    to_remove = []
+    i, n = 0, len(paragraphs)
+    while i < n:
+        if _is_visually_empty(paragraphs[i]):
+            j = i
+            while j < n and _is_visually_empty(paragraphs[j]):
+                j += 1
+            if j - i >= 2:
+                to_remove.extend(paragraphs[i:j])
+            i = j
+        else:
+            i += 1
+    for p in to_remove:
+        p._element.getparent().remove(p._element)
+    return len(to_remove)
 
 
 def build_examen_final(doc: Document):
@@ -114,57 +197,14 @@ def build_examen_final(doc: Document):
         "Qué se guarda: una Venta / Pedido con estructura cabecera-detalle: la tabla order (cabecera) "
         "y order_detail (varias líneas). La operación se graba 'todo o nada': si una línea falla, no "
         "se inserta nada. La cabecera, todos los detalles y el descuento de stock se ejecutan dentro "
-        "de la misma transacción del procedimiento almacenado en PostgreSQL (fn_register_order).",
+        "de la misma transacción del procedimiento almacenado en PostgreSQL (fn_register_order). La "
+        "vista (Pages/Cart.cshtml.cs) nunca toca la base de datos: llama a "
+        "OrderRepository.RegisterOrderAsync, y ese método invoca la función fn_register_order.",
     )
-    add_caption(doc, "1) La vista llama a la capa de datos, nunca al DbContext (Pages/Cart.cshtml.cs)")
-    add_code_block(
-        doc,
-        """var orderId = await orderRepo.RegisterOrderAsync(customerId, lines);
-CartSession.Clear(HttpContext.Session);
-TempData["Success"] = $"¡Pedido registrado correctamente! Número de orden: {orderId}";
-return RedirectToPage("/Orders");""",
-    )
-    add_caption(doc, "2) El repositorio delega la escritura transaccional al SP (Data/OrderRepository.cs)")
-    add_code_block(
-        doc,
-        """public async Task<int> RegisterOrderAsync(int? customerId, IReadOnlyList<CartLineDto> lines)
-{
-    // ...validaciones de cantidad y stock...
-    var payload = lines.Select(l => new {
-        product_id = l.ProductId, quantity = l.Quantity, unit_price = l.UnitPrice });
-    var json = JsonSerializer.Serialize(payload);
-
-    var orderId = await ctx.Database
-        .SqlQuery<int>($"SELECT fn_register_order({customerId}, {json}::jsonb) AS \\"Value\\"")
-        .SingleAsync();
-    return orderId;
-}""",
-    )
-    add_caption(doc, "3) Transacción 'todo o nada' en PostgreSQL (zoapex-db/sql/zoapex_database.sql)")
-    add_code_block(
-        doc,
-        """CREATE OR REPLACE FUNCTION fn_register_order(p_customer_id INT, p_details JSONB)
-RETURNS INT AS $$
-DECLARE v_order_id INT; ...
-BEGIN
-    -- Genera código y calcula subtotal / IGV / total recorriendo el JSON
-    INSERT INTO "order" (code, customer_id, subtotal, tax, total, status)
-    VALUES (v_code, p_customer_id, v_subtotal, v_tax, v_total, 1)
-    RETURNING order_id INTO v_order_id;
-
-    -- Inserta detalles y descuenta stock (misma transacción)
-    FOR v_detail IN SELECT * FROM jsonb_array_elements(p_details) LOOP
-        INSERT INTO order_detail (order_id, product_id, quantity, unit_price, subtotal)
-        VALUES (v_order_id, v_prod_id, v_qty, v_price, v_line_subtotal);
-        UPDATE product SET stock = stock - v_qty WHERE product_id = v_prod_id;
-    END LOOP;
-
-    RETURN v_order_id;
-END;
-$$ LANGUAGE plpgsql;""",
-    )
-    add_placeholder(doc, "[CAPTURA A-1: carrito y mensaje '¡Pedido registrado correctamente!' en Mis pedidos]")
-    add_placeholder(doc, "[CAPTURA A-2: registros en las tablas order y order_detail con el stock descontado]")
+    add_placeholder(doc, "[CAPTURA A-1: código de OrderRepository.cs — método RegisterOrderAsync completo]")
+    add_placeholder(doc, "[CAPTURA A-2: función fn_register_order en el Editor SQL de Supabase o en el archivo zoapex-db/sql/zoapex_database.sql]")
+    add_placeholder(doc, "[CAPTURA A-3: carrito confirmando la compra y mensaje '¡Pedido registrado correctamente!' en Mis pedidos]")
+    add_placeholder(doc, "[CAPTURA A-4: registros resultantes en las tablas order y order_detail, con el stock del producto ya descontado]")
 
     # ---- Parte B ----
     add_heading(doc, "B. Reporte y descarga a Excel con EPPlus", level=2)
@@ -172,11 +212,12 @@ $$ LANGUAGE plpgsql;""",
     add_heading(doc, "B.1. El reporte en la web (mostrar)", level=3)
     add_body(
         doc,
-        "Cree una página nueva /SalesReport ('Reporte de ventas') que presenta el dato como análisis, "
+        "Creé una página nueva /SalesReport ('Reporte de ventas') que presenta el dato como análisis, "
         "tabla y gráfico (no como texto crudo). Muestra cuatro indicadores (KPIs): número de pedidos, "
         "unidades vendidas, ticket promedio y ventas totales; un gráfico de barras con el Top 5 de "
         "productos por ingreso; una tabla de ventas por fecha; y una tabla con el detalle de pedidos.",
     )
+    add_placeholder(doc, "[CAPTURA B-1: página /SalesReport con los KPIs, el gráfico de barras y las tablas]")
 
     add_heading(doc, "B.2. Cómo llegué al reporte (explicado con mis palabras)", level=3)
     add_body(
@@ -193,98 +234,28 @@ $$ LANGUAGE plpgsql;""",
         "detalle de pedidos para revisar caso por caso. Así el reporte pasa de 'texto crudo' a un "
         "tablero con análisis, gráfico y tablas, y ese mismo dato es el que después se descarga en Excel.",
     )
-    add_placeholder(doc, "[CAPTURA B-1: página /SalesReport con KPIs, gráfico de barras y tablas]")
 
     add_heading(doc, "B.3. La descarga a Excel con EPPlus (exportar)", level=3)
     add_body(
         doc,
         "El botón 'Descargar Excel' apunta al handler OnGetExportAsync, que genera y descarga un "
         "archivo .xlsx real. La respuesta usa el content-type de Office y un nombre de archivo con "
-        "fecha y hora.",
+        "fecha y hora. El armado del libro (dos hojas: 'Resumen' con KPIs y gráfico, y 'Detalle de "
+        "pedidos' con autofiltro y fila de totales) vive en Data/SalesExcelExporter.cs, y la licencia "
+        "de uso académico se configura una sola vez en Program.cs.",
     )
-    add_caption(doc, "1) Handler que devuelve el archivo (Pages/SalesReport.cshtml.cs)")
-    add_code_block(
-        doc,
-        """public async Task<IActionResult> OnGetExportAsync()
-{
-    if (!CustomerSession.IsAdmin(HttpContext.Session))
-        return RedirectToPage("/Account/Login", new { returnUrl = "/SalesReport" });
-
-    var report = await orderRepo.GetSalesReportAsync();
-    var bytes  = exporter.Build(report);
-    return File(bytes,
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        $"reporte-ventas-{DateTime.Now:yyyyMMdd-HHmm}.xlsx");
-}""",
-    )
-    add_caption(doc, "2) Armado del libro con EPPlus (Data/SalesExcelExporter.cs, extracto)")
-    add_code_block(
-        doc,
-        """public byte[] Build(SalesReportDto data)
-{
-    using var package = new ExcelPackage();
-    var ws = package.Workbook.Worksheets.Add("Resumen");
-    ws.Cells["A1"].Value = "Zoapex — Reporte de ventas";
-    // ...KPIs con formato moneda "S/ #,##0.00"...
-    var chart = ws.Drawings.AddBarChart("TopProductsChart", eBarChartType.BarClustered);
-    chart.Series.Add(/* ingresos */, /* nombres de producto */);
-    // Hoja "Detalle de pedidos" con AutoFilter + fila TOTAL con SUM(...)
-    return package.GetAsByteArray();
-}""",
-    )
-    add_caption(doc, "3) Licencia (uso académico / no comercial) y registro del servicio (Program.cs)")
-    add_code_block(
-        doc,
-        """ExcelPackage.License.SetNonCommercialPersonal("Stephano Camarena Villa");
-builder.Services.AddScoped<SalesExcelExporter>();""",
-    )
-    add_placeholder(doc, "[CAPTURA B-2: código del SalesExcelExporter.cs en el editor]")
-    add_placeholder(doc, "[CAPTURA B-3: Excel descargado abierto, hojas 'Resumen' y 'Detalle de pedidos']")
+    add_placeholder(doc, "[CAPTURA B-2: código de SalesReport.cshtml.cs — método OnGetExportAsync]")
+    add_placeholder(doc, "[CAPTURA B-3: código de SalesExcelExporter.cs — método Build (armado de hojas y gráfico con EPPlus)]")
+    add_placeholder(doc, "[CAPTURA B-4: Excel descargado y abierto — hojas 'Resumen' y 'Detalle de pedidos']")
 
     add_heading(doc, "B.4. La query adjunta (LINQ que alimenta el reporte)", level=3)
     add_body(
         doc,
         "Consulta LINQ de agregación en la capa de datos (Data/OrderRepository.cs, método "
-        "GetSalesReportAsync). Trae los pedidos con EF Core y calcula los KPIs, el top de productos y "
-        "las ventas por fecha.",
+        "GetSalesReportAsync). Trae los pedidos con EF Core y calcula los KPIs, el top de productos "
+        "(agrupando por producto y sumando cantidad e ingreso) y las ventas por fecha.",
     )
-    add_code_block(
-        doc,
-        """// Filas de pedidos (cabecera + nombre de cliente + n.º de ítems)
-var orders = await ctx.Orders.AsNoTracking()
-    .Where(o => o.Status == 1)
-    .OrderByDescending(o => o.OrderDate)
-    .Select(o => new SalesOrderRowDto(
-        o.Code, o.OrderDate,
-        o.Customer != null ? o.Customer.FirstName + " " + o.Customer.LastName : "Mostrador",
-        o.Details.Sum(d => (int?)d.Quantity) ?? 0,
-        o.Subtotal, o.Tax, o.Total))
-    .ToListAsync();
-
-// Detalle plano + Top 5 productos por ingreso
-var detailRows = await ctx.OrderDetails.AsNoTracking()
-    .Where(d => d.Order.Status == 1)
-    .Select(d => new { d.Product.Name, d.Quantity, d.Subtotal })
-    .ToListAsync();
-var topProducts = detailRows
-    .GroupBy(d => d.Name)
-    .Select(g => new TopProductDto(g.Key, g.Sum(d => d.Quantity), g.Sum(d => d.Subtotal)))
-    .OrderByDescending(t => t.Revenue).Take(5).ToList();""",
-    )
-    add_caption(doc, "Equivalente en SQL de la agregación principal (Top productos)")
-    add_code_block(
-        doc,
-        """SELECT p.name AS producto,
-       SUM(d.quantity) AS cantidad,
-       SUM(d.subtotal) AS ingreso
-FROM   order_detail d
-JOIN   "order" o ON o.order_id = d.order_id
-JOIN   product p ON p.product_id = d.product_id
-WHERE  o.status = 1
-GROUP  BY p.name
-ORDER  BY ingreso DESC
-LIMIT  5;""",
-    )
+    add_placeholder(doc, "[CAPTURA B-5: código de GetSalesReportAsync (LINQ) en OrderRepository.cs — la consulta que alimenta el reporte]")
 
     # ---- Parte C ----
     add_heading(doc, "C. Seguridad (opcional — puntos extra)", level=2)
@@ -293,7 +264,7 @@ LIMIT  5;""",
     add_bullet(doc, "Formulario de Login (/Account/Login) con validación de credenciales y hash de contraseña (PasswordHelper).")
     add_bullet(doc, "Caducidad de sesión (timeout): IdleTimeout de 30 minutos configurado en Program.cs.")
     add_body(doc, "Cuentas demo — Admin: admin@zoapex.com / zoapex123 · Cliente: cliente@zoapex.com / zoapex123.", space_after=8)
-    add_placeholder(doc, "[CAPTURA C-1: menú 'Reporte' visible como Admin; acceso denegado (redirección a Login) como Cliente]")
+    add_placeholder(doc, "[CAPTURA C-1: menú 'Reporte' visible con la cuenta Admin, y acceso denegado / redirección a Login con la cuenta Cliente]")
 
     # ---- Verificación ----
     add_heading(doc, "Verificación realizada (de punta a punta)", level=2)
@@ -318,6 +289,15 @@ def main():
         doc = Document()
         add_paragraph(doc, "Zoapex — Documento del proyecto", size=20, bold=True,
                       color=COLOR_HEADING, align=WD_ALIGN_PARAGRAPH.CENTER)
+
+    removed = strip_code_blocks(doc)
+    print(f"Párrafos de código eliminados de la sección PA4: {removed}")
+
+    filled = fill_known_gaps(doc)
+    print(f"Huecos completados con indicación de captura: {filled}")
+
+    collapsed = collapse_blank_runs(doc)
+    print(f"Párrafos en blanco sobrantes eliminados: {collapsed}")
 
     build_examen_final(doc)
     doc.save(str(OUT_FILE))

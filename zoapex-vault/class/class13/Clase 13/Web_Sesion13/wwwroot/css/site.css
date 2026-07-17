@@ -1,0 +1,184 @@
+/* ===== VentasLeon - estilos del sitio (branding ISIL teal #1E88A5) ===== */
+:root {
+    --vl-teal: #1E88A5;
+    --vl-teal-oscuro: #166b83;
+    --vl-teal-claro: #e6f3f6;
+    --vl-gris: #f4f6f8;
+    --vl-borde: #dfe4e8;
+}
+
+body {
+    background: var(--vl-gris);
+    color: #2b3a42;
+}
+
+/* --- Barra superior --- */
+.vl-navbar {
+    background: var(--vl-teal);
+}
+.vl-navbar .navbar-brand {
+    letter-spacing: .3px;
+}
+.vl-accent {
+    color: #ffd166;
+}
+.vl-navbar .nav-link {
+    color: #eaf6f9 !important;
+}
+.vl-navbar .nav-link:hover {
+    color: #ffffff !important;
+}
+.vl-stack {
+    color: #cfe8ee !important;
+    font-size: .85rem;
+}
+
+/* --- Contenido --- */
+.vl-main {
+    min-height: 70vh;
+    padding-top: 1.5rem;
+    padding-bottom: 2rem;
+}
+
+/* --- Pie --- */
+.vl-footer {
+    background: var(--vl-teal-oscuro);
+    color: #dff1f5;
+    padding: .9rem 0;
+    font-size: .85rem;
+}
+
+/* --- Portada de inicio --- */
+.vl-hero {
+    background: linear-gradient(135deg, var(--vl-teal), var(--vl-teal-oscuro));
+    color: #fff;
+    padding: 2.2rem;
+    border-radius: 14px;
+    margin-bottom: 1.6rem;
+}
+.vl-hero h1 { font-weight: 700; }
+.vl-hero .lead { color: #eaf6f9; }
+
+/* --- Tarjetas de ejemplo --- */
+.vl-card {
+    border: 1px solid var(--vl-borde);
+    border-radius: 12px;
+    height: 100%;
+}
+.vl-card .num {
+    display: inline-block;
+    width: 34px; height: 34px;
+    line-height: 34px;
+    text-align: center;
+    border-radius: 50%;
+    background: var(--vl-teal);
+    color: #fff;
+    font-weight: 700;
+    margin-bottom: .6rem;
+}
+
+/* --- Botones --- */
+.btn-vl {
+    background: var(--vl-teal);
+    border-color: var(--vl-teal);
+    color: #fff;
+}
+.btn-vl:hover {
+    background: var(--vl-teal-oscuro);
+    border-color: var(--vl-teal-oscuro);
+    color: #fff;
+}
+
+/* --- Paneles y formularios --- */
+.panel {
+    background: #fff;
+    border: 1px solid var(--vl-borde);
+    border-radius: 12px;
+    padding: 1.4rem;
+}
+.tituloForm {
+    font-weight: 700;
+    color: var(--vl-teal-oscuro);
+    border-bottom: 2px solid var(--vl-teal-claro);
+    padding-bottom: .5rem;
+    margin-bottom: 1rem;
+}
+.resultado {
+    background: var(--vl-teal-claro);
+    border-left: 4px solid var(--vl-teal);
+    padding: .8rem 1rem;
+    border-radius: 6px;
+}
+
+/* --- Tablas --- */
+.tabla-vl thead th {
+    background: var(--vl-teal);
+    color: #fff;
+    border-color: var(--vl-teal);
+}
+.tabla-vl tbody tr:hover {
+    background: var(--vl-teal-claro);
+}
+
+/* --- Notas --- */
+.vl-nota {
+    background: #fff8e6;
+    border: 1px solid #ffe2a8;
+    color: #7a5c00;
+    padding: .7rem .9rem;
+    border-radius: 8px;
+    font-size: .9rem;
+    margin-top: 1rem;
+}
+
+/* Contenedor del grafico (Ejemplo 2) */
+.vl-grafico {
+    background: #fff;
+    border: 1px solid #e3e8ec;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+/* Paginador (Ejemplo 3) */
+.vl-pager {
+    display: flex;
+    gap: .35rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 1rem;
+}
+.vl-pager a,
+.vl-pager span.actual {
+    display: inline-block;
+    min-width: 38px;
+    text-align: center;
+    padding: .35rem .6rem;
+    border: 1px solid #cfd8dd;
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--vl-teal);
+}
+.vl-pager span.actual {
+    background: var(--vl-teal);
+    border-color: var(--vl-teal);
+    color: #fff;
+    font-weight: 600;
+}
+.vl-pager a:hover { background: #eef5f7; }
+.vl-pager .deshab {
+    color: #aab3b8;
+    border-color: #e3e8ec;
+    pointer-events: none;
+}
+
+/* Selector de modo de paginacion */
+.vl-modo { display: inline-flex; gap: .4rem; margin-bottom: 1rem; }
+.vl-modo a {
+    padding: .4rem .9rem;
+    border: 1px solid var(--vl-teal);
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--vl-teal);
+    font-size: .9rem;
+}
+.vl-modo a.activo { background: var(--vl-teal); color: #fff; }

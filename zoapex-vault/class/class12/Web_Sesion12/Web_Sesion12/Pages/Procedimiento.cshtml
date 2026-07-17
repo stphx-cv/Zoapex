@@ -1,0 +1,71 @@
+@page
+@model ProcedimientoModel
+@{
+    ViewData["Title"] = "Procedimiento almacenado";
+}
+
+<div class="panel">
+    <p class="tituloForm">Ejemplo 2 · Procedimiento almacenado (EF Core)</p>
+
+    <form method="post">
+        <div asp-validation-summary="All" class="text-danger mb-2"></div>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label asp-for="Codigo" class="form-label">Codigo de cliente</label>
+                <input asp-for="Codigo" class="form-control" placeholder="C001" />
+                <span asp-validation-for="Codigo" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="FechaInicio" class="form-label">Desde</label>
+                <input asp-for="FechaInicio" type="date" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="FechaFin" class="form-label">Hasta</label>
+                <input asp-for="FechaFin" type="date" class="form-control" />
+            </div>
+        </div>
+        <button type="submit" class="btn btn-vl mt-3">Ejecutar procedimientos</button>
+    </form>
+
+    @if (Model.Consultado)
+    {
+        <div class="resultado mt-3">
+            Deuda (vía SP <strong>usp_DeudaCliente</strong>, parámetro de salida):
+            <strong>S/ @Model.Deuda.ToString("0.00")</strong>
+        </div>
+
+        @if (Model.Facturas.Count > 0)
+        {
+            <p class="mt-3 mb-1 text-muted">Resultado del SP <strong>usp_ListarFacturasClienteFechas</strong>:</p>
+            <table class="table tabla-vl">
+                <thead>
+                    <tr><th>N° Factura</th><th>Fecha</th><th>Estado</th><th class="text-end">Total</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var f in Model.Facturas)
+                    {
+                        <tr>
+                            <td>@f.Num_fac</td>
+                            <td>@f.Fec_fac.ToString("dd/MM/yyyy")</td>
+                            <td>@f.Estado</td>
+                            <td class="text-end">S/ @f.Total.ToString("0.00")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="vl-nota mt-3">El procedimiento no devolvió facturas para ese rango.</div>
+        }
+    }
+
+    <div class="vl-nota">
+        Mismo resultado que el Ejemplo 1, pero la lógica vive en la base de datos.
+        EF Core ejecuta los SP con <strong>FromSql</strong> (filas) y un <strong>parámetro de salida</strong> (escalar).
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

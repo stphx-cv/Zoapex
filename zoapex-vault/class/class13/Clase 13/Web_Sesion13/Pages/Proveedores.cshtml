@@ -1,0 +1,222 @@
+@page
+@model ProveedoresModel
+@{
+    ViewData["Title"] = "CRUD Proveedores";
+}
+@Html.AntiForgeryToken()
+
+<div class="panel">
+    <p class="tituloForm">Ejemplo 1 · CRUD de Proveedores (tabla HTML + modal + AJAX)</p>
+
+    <div class="row g-3 align-items-end mb-3">
+        <div class="col-md-6">
+            <label class="form-label">Buscar por razon social</label>
+            <input id="filtro" class="form-control" placeholder="Escriba y presione Buscar..." />
+        </div>
+        <div class="col-md-3">
+            <button id="btnBuscar" type="button" class="btn btn-vl w-100">Buscar</button>
+        </div>
+        <div class="col-md-3">
+            <button id="btnNuevo" type="button" class="btn btn-outline-secondary w-100">+ Nuevo proveedor</button>
+        </div>
+    </div>
+
+    <table class="table tabla-vl">
+        <thead>
+            <tr>
+                <th>Codigo</th><th>Razon social</th><th>RUC</th><th>Estado</th><th class="text-end">Accion</th>
+            </tr>
+        </thead>
+        <tbody id="cuerpoProveedores"></tbody>
+    </table>
+
+    <div class="vl-nota">
+        La fila de un proveedor inactivo se pinta en rojo (clase <strong>text-danger</strong>). Grabar usa
+        <strong>fetch</strong> y no recarga la pagina. La regla de oro sigue: la vista nunca toca la base de datos.
+    </div>
+</div>
+
+<!-- Modal de Bootstrap para insertar / editar -->
+<div class="modal fade" id="modalProveedor" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tituloModal">Nuevo proveedor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="codPrv" />
+                <div class="mb-2">
+                    <label class="form-label">Razon social</label>
+                    <input id="razSocPrv" class="form-control" />
+                </div>
+                <div class="row g-2">
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label">RUC</label>
+                        <input id="rucPrv" class="form-control" maxlength="11" />
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label">Estado</label>
+                        <select id="estPrv" class="form-select">
+                            <option value="1">Activo</option>
+                            <option value="0">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Direccion</label>
+                    <input id="dirPrv" class="form-control" />
+                </div>
+                <hr />
+                <p class="text-muted mb-2">Ubigeo (combos en cascada)</p>
+                <div class="row g-2">
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label">Departamento</label>
+                        <select id="cboDepartamento" class="form-select"></select>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label">Provincia</label>
+                        <select id="cboProvincia" class="form-select"></select>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label">Distrito</label>
+                        <select id="cboDistrito" class="form-select"></select>
+                    </div>
+                </div>
+                <div id="errorModal" class="text-danger mt-2"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" id="btnGuardar" class="btn btn-vl">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // instancia del modal de Bootstrap (se abre y cierra desde JavaScript)
+        const modal = new bootstrap.Modal(document.getElementById("modalProveedor"));
+        const cboDep = document.getElementById("cboDepartamento");
+        const cboProv = document.getElementById("cboProvincia");
+        const cboDist = document.getElementById("cboDistrito");
+
+        // ---- LISTAR ----
+        async function cargarLista() {
+            const filtro = document.getElementById("filtro").value.trim();
+            const r = await fetch(`?handler=Listar&filtro=${encodeURIComponent(filtro)}`);
+            const lista = await r.json();
+            const cuerpo = document.getElementById("cuerpoProveedores");
+            cuerpo.innerHTML = "";
+            lista.forEach(p => {
+                const fila = document.createElement("tr");
+                // clase CSS condicional: rojo si esta inactivo
+                if (p.estPrv === 0) fila.className = "text-danger";
+                fila.innerHTML =
+                    `<td>${p.codPrv}</td><td>${p.razSocPrv}</td><td>${p.rucPrv || "-"}</td>` +
+                    `<td>${p.estPrv === 1 ? "Activo" : "Inactivo"}</td>` +
+                    `<td class="text-end"><button class="btn btn-sm btn-outline-secondary" onclick="editar('${p.codPrv}')">Editar</button></td>`;
+                cuerpo.appendChild(fila);
+            });
+        }
+
+        // ---- UBIGEO EN CASCADA ----
+        async function cargarDepartamentos() {
+            const r = await fetch(`?handler=Departamentos`);
+            llenarCombo(cboDep, await r.json(), "-- Departamento --");
+            llenarCombo(cboProv, [], "-- Provincia --");
+            llenarCombo(cboDist, [], "-- Distrito --");
+        }
+        async function cargarProvincias(dep) {
+            const r = await fetch(`?handler=Provincias&dep=${encodeURIComponent(dep)}`);
+            llenarCombo(cboProv, await r.json(), "-- Provincia --");
+            llenarCombo(cboDist, [], "-- Distrito --");
+        }
+        async function cargarDistritos(prov) {
+            const r = await fetch(`?handler=Distritos&prov=${encodeURIComponent(prov)}`);
+            llenarCombo(cboDist, await r.json(), "-- Distrito --");
+        }
+        // al cambiar el combo de departamento se piden sus provincias, sin recargar
+        cboDep.addEventListener("change", () => { if (cboDep.value) cargarProvincias(cboDep.value); });
+        cboProv.addEventListener("change", () => { if (cboProv.value) cargarDistritos(cboProv.value); });
+
+        // ---- NUEVO ----
+        async function nuevo() {
+            document.getElementById("tituloModal").textContent = "Nuevo proveedor";
+            document.getElementById("errorModal").textContent = "";
+            const r = await fetch(`?handler=NuevoCodigo`);
+            const data = await r.json();
+            document.getElementById("codPrv").value = data.codigo;
+            document.getElementById("razSocPrv").value = "";
+            document.getElementById("rucPrv").value = "";
+            document.getElementById("dirPrv").value = "";
+            document.getElementById("estPrv").value = "1";
+            await cargarDepartamentos();
+            modal.show();
+        }
+
+        // ---- EDITAR ----
+        async function editar(codigo) {
+            document.getElementById("tituloModal").textContent = "Editar proveedor " + codigo;
+            document.getElementById("errorModal").textContent = "";
+            const r = await fetch(`?handler=Obtener&codigo=${encodeURIComponent(codigo)}`);
+            const p = await r.json();
+            document.getElementById("codPrv").value = p.codPrv;
+            document.getElementById("razSocPrv").value = p.razSocPrv;
+            document.getElementById("rucPrv").value = p.rucPrv || "";
+            document.getElementById("dirPrv").value = p.dirPrv || "";
+            document.getElementById("estPrv").value = p.estPrv;
+
+            // se cargan los combos y se seleccionan los valores guardados, en cascada
+            await cargarDepartamentos();
+            if (p.codDep) {
+                cboDep.value = p.codDep;
+                await cargarProvincias(p.codDep);
+                if (p.codProv) {
+                    cboProv.value = p.codProv;
+                    await cargarDistritos(p.codProv);
+                    if (p.codDist) cboDist.value = p.codDist;
+                }
+            }
+            modal.show();
+        }
+
+        // ---- GUARDAR (fetch POST con token antiforgery) ----
+        async function guardar() {
+            const dto = {
+                codPrv: document.getElementById("codPrv").value,
+                razSocPrv: document.getElementById("razSocPrv").value.trim(),
+                rucPrv: document.getElementById("rucPrv").value.trim(),
+                dirPrv: document.getElementById("dirPrv").value.trim(),
+                codDep: cboDep.value,
+                codProv: cboProv.value,
+                codDist: cboDist.value,
+                estPrv: parseInt(document.getElementById("estPrv").value)
+            };
+            if (dto.razSocPrv === "") {
+                document.getElementById("errorModal").textContent = "Ingrese la razon social.";
+                return;
+            }
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            const r = await fetch(`?handler=Guardar`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "RequestVerificationToken": token },
+                body: JSON.stringify(dto)
+            });
+            const res = await r.json();
+            if (res.ok) {
+                modal.hide();
+                await cargarLista();   // refresca la tabla sin recargar la pagina
+            } else {
+                document.getElementById("errorModal").textContent = res.msg || "No se pudo guardar.";
+            }
+        }
+
+        document.getElementById("btnBuscar").addEventListener("click", cargarLista);
+        document.getElementById("btnNuevo").addEventListener("click", nuevo);
+        document.getElementById("btnGuardar").addEventListener("click", guardar);
+
+        // primera carga
+        cargarLista();
+    </script>
+}

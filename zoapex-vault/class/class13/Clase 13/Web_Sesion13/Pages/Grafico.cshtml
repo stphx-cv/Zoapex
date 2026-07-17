@@ -1,0 +1,87 @@
+@page
+@model GraficoModel
+@{
+    ViewData["Title"] = "Facturacion anual";
+}
+
+<div class="panel">
+    <p class="tituloForm">Ejemplo 2 · Consulta de valor con grafico (EF Core + Chart.js)</p>
+
+    <p class="text-muted">
+        Total facturado por a&ntilde;o (sin contar las anuladas). El c&aacute;lculo se hace en el
+        servidor con LINQ (<strong>GroupBy</strong>) y el resultado se muestra en una tabla y en un
+        grafico de barras.
+    </p>
+
+    @if (Model.Facturacion.Count > 0)
+    {
+        <div class="row g-4 mt-1">
+            <div class="col-md-5">
+                <table class="table tabla-vl">
+                    <thead>
+                        <tr><th>A&ntilde;o</th><th class="text-end">Total facturado</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var fila in Model.Facturacion)
+                        {
+                            <tr>
+                                <td>@fila.Anio</td>
+                                <td class="text-end">S/ @fila.Total.ToString("0.00")</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr class="fw-bold">
+                            <td>Total</td>
+                            <td class="text-end">S/ @Model.Facturacion.Sum(f => f.Total).ToString("0.00")</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="col-md-7">
+                <div class="vl-grafico">
+                    <canvas id="grafico"></canvas>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="vl-nota mt-3">No hay facturacion registrada.</div>
+    }
+
+    <div class="vl-nota">
+        El servidor calcula los totales con LINQ y los entrega a la vista. <strong>Chart.js</strong>
+        (una libreria de JavaScript) recibe esos datos y dibuja el grafico en el navegador,
+        reemplazando al antiguo control <strong>Chart</strong> de Web Forms.
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Chart.js desde CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script>
+        // los datos vienen del servidor (calculados con LINQ) y se pasan al grafico
+        const anios = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Anios));
+        const totales = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Totales));
+
+        if (anios.length > 0) {
+            new Chart(document.getElementById("grafico"), {
+                type: "bar",
+                data: {
+                    labels: anios,
+                    datasets: [{
+                        label: "Total facturado (S/)",
+                        data: totales,
+                        backgroundColor: "#1E88A5"
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: true } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+    </script>
+}

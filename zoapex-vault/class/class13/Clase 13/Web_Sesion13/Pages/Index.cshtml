@@ -1,0 +1,49 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Inicio";
+}
+
+<div class="vl-hero">
+    <h1>VentasLeon</h1>
+    <p class="lead">Sesion 13 · Aplicaciones N capas: CRUD con modal y AJAX, consultas de valor con grafico y paginacion.</p>
+    <p>Tres ejemplos sobre la misma base de datos, ampliando el sitio de la Sesion 12.</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card vl-card">
+            <div class="card-body">
+                <span class="num">1</span>
+                <h5 class="card-title">CRUD de Proveedores</h5>
+                <p class="text-muted">Listado en tabla HTML, buscador y modal de Bootstrap para insertar/editar con AJAX, con combos de ubigeo en cascada.</p>
+                <a class="btn btn-vl btn-sm" asp-page="/Proveedores">Abrir ejemplo</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card vl-card">
+            <div class="card-body">
+                <span class="num">2</span>
+                <h5 class="card-title">Consulta de valor con grafico</h5>
+                <p class="text-muted">Facturacion anual mostrada en tabla y en un grafico de barras con Chart.js.</p>
+                <a class="btn btn-vl btn-sm" asp-page="/Grafico">Abrir ejemplo</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card vl-card">
+            <div class="card-body">
+                <span class="num">3</span>
+                <h5 class="card-title">Paginacion</h5>
+                <p class="text-muted">Listado de facturas paginado de dos formas: local (Skip/Take) y con procedimiento almacenado (OFFSET/FETCH).</p>
+                <a class="btn btn-vl btn-sm" asp-page="/Paginacion">Abrir ejemplo</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="vl-nota">
+    Antes de probar, ejecute una sola vez <strong>VentasLeon.sql</strong> y luego <strong>VentasLeon_S13.sql</strong> en SQL Server,
+    para crear la base, el ubigeo, los proveedores y el procedimiento de paginacion.
+</div>

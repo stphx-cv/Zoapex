@@ -1,0 +1,13 @@
+@page
+@model ErrorModel
+@{
+    ViewData["Title"] = "Error";
+}
+<div class="panel">
+    <h2 class="text-danger">Se produjo un error.</h2>
+    <p>Ocurrio un error al procesar su solicitud.</p>
+    @if (Model.MostrarRequestId)
+    {
+        <p><strong>Request ID:</strong> <code>@Model.RequestId</code></p>
+    }
+</div>

@@ -1,0 +1,97 @@
+@page
+@model AjaxModel
+@{
+    ViewData["Title"] = "AJAX moderno";
+}
+<div class="panel">
+    <p class="tituloForm">Sesion 12 · AJAX moderno (fetch + EF Core)</p>
+
+    <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Codigo de cliente</label>
+            <input id="codigo" class="form-control" placeholder="C001" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Desde</label>
+            <input id="desde" type="date" class="form-control" value="2023-01-01" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Hasta</label>
+            <input id="hasta" type="date" class="form-control" value="2025-12-31" />
+        </div>
+        <div class="col-md-3">
+            <button id="btnBuscar" type="button" class="btn btn-vl w-100">Buscar (sin recargar)</button>
+        </div>
+    </div>
+
+    <div id="panelCliente" class="resultado mt-3" style="display:none">
+        <div><strong id="razon"></strong></div>
+        <div class="text-muted"><span id="ruc"></span> · <span id="dir"></span></div>
+        <div class="mt-2">Deuda pendiente: <strong id="deuda">S/ 0.00</strong></div>
+    </div>
+
+    <div id="avisoVacio" class="vl-nota mt-3" style="display:none">No se encontro un cliente con ese codigo.</div>
+
+    <table id="tablaFacturas" class="table tabla-vl mt-3" style="display:none">
+        <thead><tr><th>N° Factura</th><th>Fecha</th><th>Estado</th><th class="text-end">Total</th></tr></thead>
+        <tbody id="cuerpoFacturas"></tbody>
+    </table>
+
+    <div class="vl-nota">
+        El boton "Buscar" llama por <strong>fetch</strong> al handler <strong>OnGetBuscarCliente</strong>,
+        que consulta la BD via EF Core y devuelve JSON. JavaScript actualiza solo el panel, sin recargar.
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // pide los datos del cliente al servidor (handler BuscarCliente) y refresca solo el panel
+        async function buscarCliente() {
+            const codigo = document.getElementById("codigo").value.trim();
+            const desde = document.getElementById("desde").value;
+            const hasta = document.getElementById("hasta").value;
+            if (codigo === "") { alert("Ingrese un codigo de cliente."); return; }
+
+            const r = await fetch(`?handler=BuscarCliente&codigo=${encodeURIComponent(codigo)}`);
+            const data = await r.json();
+
+            const panel = document.getElementById("panelCliente");
+            const aviso = document.getElementById("avisoVacio");
+
+            if (!data.encontrado) {
+                panel.style.display = "none";
+                document.getElementById("tablaFacturas").style.display = "none";
+                aviso.style.display = "block";
+                return;
+            }
+
+            aviso.style.display = "none";
+            document.getElementById("razon").textContent = data.razSocCli;
+            document.getElementById("ruc").textContent = "RUC " + (data.rucCli || "-");
+            document.getElementById("dir").textContent = data.dirCli || "";
+            document.getElementById("deuda").textContent = formatearSoles(data.deuda);
+            panel.style.display = "block";
+
+            await cargarFacturas(codigo, desde, hasta);
+        }
+
+        // pide las facturas del rango (handler Facturas) y llena la tabla sin recargar
+        async function cargarFacturas(codigo, desde, hasta) {
+            const r = await fetch(`?handler=Facturas&codigo=${encodeURIComponent(codigo)}&ini=${desde}&fin=${hasta}`);
+            const lista = await r.json();
+            const cuerpo = document.getElementById("cuerpoFacturas");
+            const tabla = document.getElementById("tablaFacturas");
+            cuerpo.innerHTML = "";
+            if (!lista || lista.length === 0) { tabla.style.display = "none"; return; }
+            lista.forEach(f => {
+                const fila = document.createElement("tr");
+                fila.innerHTML = `<td>${f.numFac}</td><td>${f.fecha}</td><td>${f.estado}</td>` +
+                    `<td class="text-end">${formatearSoles(f.total)}</td>`;
+                cuerpo.appendChild(fila);
+            });
+            tabla.style.display = "table";
+        }
+
+        document.getElementById("btnBuscar").addEventListener("click", buscarCliente);
+    </script>
+}

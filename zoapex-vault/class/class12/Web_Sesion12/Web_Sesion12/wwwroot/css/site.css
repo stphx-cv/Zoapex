@@ -1,0 +1,120 @@
+/* Estilos propios del sitio VentasLeon. Color principal: teal ISIL. */
+:root {
+    --vl-teal: #1E88A5;
+    --vl-teal-dark: #156a82;
+    --vl-naranja: #E8743B;
+    --vl-gris: #f4f7f9;
+}
+
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #33475B;
+    background: #ffffff;
+}
+
+/* Menu superior */
+.vl-navbar {
+    background: linear-gradient(90deg, var(--vl-teal), var(--vl-teal-dark));
+    box-shadow: 0 2px 6px rgba(0,0,0,.15);
+}
+.vl-navbar .navbar-brand { font-size: 1.4rem; letter-spacing: .5px; }
+.vl-accent { color: #ffd27a; }
+.vl-navbar .nav-link { color: #eaf6f9 !important; }
+.vl-navbar .nav-link:hover { color: #ffffff !important; }
+.vl-stack { color: #cdeaf2; font-size: .85rem; }
+
+.vl-main { min-height: 72vh; padding-top: 28px; padding-bottom: 40px; }
+
+/* Pie de pagina */
+.vl-footer {
+    background: #1d2b33;
+    color: #c7d3d9;
+    padding: 18px 0;
+    font-size: .9rem;
+    text-align: center;
+}
+
+/* Portada (hero) de la pagina de inicio */
+.vl-hero {
+    background: linear-gradient(120deg, var(--vl-teal), #2aa6c5);
+    color: #fff;
+    border-radius: 12px;
+    padding: 44px 40px;
+    margin-bottom: 30px;
+}
+.vl-hero h1 { font-weight: 800; }
+
+/* Tarjetas de los ejemplos */
+.vl-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.08);
+    transition: transform .15s ease;
+    height: 100%;
+}
+.vl-card:hover { transform: translateY(-4px); }
+.vl-card .num {
+    display: inline-block; width: 38px; height: 38px; line-height: 38px;
+    text-align: center; border-radius: 50%; background: var(--vl-teal);
+    color: #fff; font-weight: 700; margin-bottom: 10px;
+}
+
+/* Paneles */
+.panel {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.08);
+    padding: 28px 30px;
+    margin-bottom: 24px;
+}
+
+/* Titulo de formulario */
+.tituloForm {
+    color: var(--vl-teal);
+    font-weight: 700;
+    font-size: 1.3rem;
+    border-left: 5px solid var(--vl-naranja);
+    padding-left: 12px;
+    margin-bottom: 18px;
+}
+
+/* Controles */
+.form-label { font-weight: 600; }
+.form-control:focus, .form-select:focus {
+    border-color: var(--vl-teal);
+    box-shadow: 0 0 0 .2rem rgba(30,136,165,.2);
+}
+.btn-vl {
+    background: var(--vl-teal);
+    border-color: var(--vl-teal);
+    color: #fff;
+    font-weight: 600;
+}
+.btn-vl:hover { background: var(--vl-teal-dark); border-color: var(--vl-teal-dark); color: #fff; }
+
+/* Caja de resultado */
+.resultado {
+    background: linear-gradient(120deg, #eaf4f7, #d8eef3);
+    border-left: 5px solid var(--vl-teal);
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin-top: 16px;
+}
+.resultado strong { color: var(--vl-teal-dark); }
+
+/* Nota informativa pequena */
+.vl-nota {
+    background: var(--vl-gris);
+    border-left: 4px solid var(--vl-teal);
+    padding: 10px 14px;
+    font-size: .9rem;
+    border-radius: 6px;
+    margin-top: 14px;
+}
+
+/* Tabla de resultados */
+.tabla-vl thead th { background: var(--vl-teal); color: #fff; }
+.tabla-vl tbody tr:nth-child(even) { background: #f4f8fa; }
+
+/* Etiqueta de estado */
+.badge-estado { font-size: .8rem; }
