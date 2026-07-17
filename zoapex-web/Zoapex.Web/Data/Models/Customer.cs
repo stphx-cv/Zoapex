@@ -31,6 +31,9 @@ public class Customer
     [Column("password_hash")]
     public string? PasswordHash { get; set; }
 
+    [Column("role")]
+    public string Role { get; set; } = "Cliente";
+
     public string FullName => $"{FirstName} {LastName}".Trim();
 
     public ICollection<OrderHeader> Orders { get; set; } = [];

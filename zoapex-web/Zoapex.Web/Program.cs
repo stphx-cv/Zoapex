@@ -1,6 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Licencia EPPlus (uso académico / no comercial)
+ExcelPackage.License.SetNonCommercialPersonal("Stephano Camarena Villa");
 
 builder.Services.AddRazorPages();
 builder.Services.AddDbContext<Zoapex.Web.Data.ZoapexDbContext>(options =>
@@ -10,6 +14,7 @@ builder.Services.AddDbContext<Zoapex.Web.Data.ZoapexDbContext>(options =>
 builder.Services.AddScoped<Zoapex.Web.Data.CatalogRepository>();
 builder.Services.AddScoped<Zoapex.Web.Data.OrderRepository>();
 builder.Services.AddScoped<Zoapex.Web.Data.CustomerRepository>();
+builder.Services.AddScoped<Zoapex.Web.Data.SalesExcelExporter>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {

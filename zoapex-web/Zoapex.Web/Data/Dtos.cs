@@ -47,3 +47,27 @@ public record OrderHistoryDto(
     decimal Tax,
     decimal Total,
     IReadOnlyList<OrderDetailLineDto> Details);
+
+// ---- Reporte de ventas (Examen Final: mostrar + exportar) ----
+
+public record TopProductDto(string ProductName, int Quantity, decimal Revenue);
+
+public record SalesByDateDto(DateTime Date, int Orders, decimal Total);
+
+public record SalesOrderRowDto(
+    string Code,
+    DateTime OrderDate,
+    string CustomerName,
+    int Items,
+    decimal Subtotal,
+    decimal Tax,
+    decimal Total);
+
+public record SalesReportDto(
+    int OrderCount,
+    decimal TotalRevenue,
+    decimal AverageTicket,
+    int UnitsSold,
+    IReadOnlyList<TopProductDto> TopProducts,
+    IReadOnlyList<SalesByDateDto> SalesByDate,
+    IReadOnlyList<SalesOrderRowDto> Orders);

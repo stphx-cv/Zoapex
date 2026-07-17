@@ -43,7 +43,8 @@ public class RegisterModel(CustomerRepository customerRepo) : PageModel
                 HttpContext.Session,
                 customer.CustomerId,
                 customer.FullName,
-                customer.Email ?? Email);
+                customer.Email ?? Email,
+                customer.Role);
 
             return RedirectToPage("/Catalog");
         }

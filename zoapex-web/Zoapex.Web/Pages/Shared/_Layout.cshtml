@@ -32,6 +32,10 @@
                 {
                     <a asp-page="/Orders" class="@(currentPage == "/Orders" ? "active" : "")">Mis pedidos</a>
                 }
+                @if (CustomerSession.IsAdmin(Context.Session))
+                {
+                    <a asp-page="/SalesReport" class="@(currentPage == "/SalesReport" ? "active" : "")">Reporte</a>
+                }
             </nav>
 
             <div class="header-actions">

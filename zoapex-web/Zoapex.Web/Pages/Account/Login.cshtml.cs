@@ -38,7 +38,8 @@ public class LoginModel(CustomerRepository customerRepo) : PageModel
             HttpContext.Session,
             customer.CustomerId,
             customer.FullName,
-            customer.Email ?? Email);
+            customer.Email ?? Email,
+            customer.Role);
 
         return Redirect(ReturnUrl);
     }

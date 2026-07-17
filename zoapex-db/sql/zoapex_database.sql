@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS customer (
     phone       VARCHAR(15),
     address     VARCHAR(200),
     password_hash VARCHAR(512),
+    role        VARCHAR(20)  NOT NULL DEFAULT 'Cliente',
     status      SMALLINT     NOT NULL DEFAULT 1
 );
 

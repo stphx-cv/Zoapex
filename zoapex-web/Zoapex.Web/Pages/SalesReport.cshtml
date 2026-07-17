@@ -1,0 +1,111 @@
+@page
+@model SalesReportModel
+@{
+    ViewData["Title"] = "Reporte de ventas";
+    var report = Model.Report!;
+}
+
+<div class="page-header">
+    <div class="page-header-row">
+        <div>
+            <h1>Reporte de ventas</h1>
+            <p>Análisis del negocio: totales, top de productos y ventas por fecha.</p>
+        </div>
+        <a asp-page="/SalesReport" asp-page-handler="Export" class="btn btn-primary">⬇ Descargar Excel</a>
+    </div>
+</div>
+
+<section class="kpi-grid">
+    <div class="kpi-card">
+        <span class="kpi-label">Pedidos</span>
+        <span class="kpi-value">@report.OrderCount</span>
+    </div>
+    <div class="kpi-card">
+        <span class="kpi-label">Unidades vendidas</span>
+        <span class="kpi-value">@report.UnitsSold</span>
+    </div>
+    <div class="kpi-card">
+        <span class="kpi-label">Ticket promedio</span>
+        <span class="kpi-value">S/ @report.AverageTicket.ToString("N2")</span>
+    </div>
+    <div class="kpi-card kpi-highlight">
+        <span class="kpi-label">Ventas totales</span>
+        <span class="kpi-value">S/ @report.TotalRevenue.ToString("N2")</span>
+    </div>
+</section>
+
+<section class="report-section">
+    <h2>Top productos por ingreso</h2>
+    @if (report.TopProducts.Count == 0)
+    {
+        <p class="muted">Aún no hay ventas registradas.</p>
+    }
+    else
+    {
+        <div class="bar-chart">
+            @foreach (var p in report.TopProducts)
+            {
+                var pct = Model.MaxProductRevenue > 0 ? (double)(p.Revenue / Model.MaxProductRevenue) * 100 : 0;
+                <div class="bar-row">
+                    <span class="bar-label">@p.ProductName</span>
+                    <div class="bar-track">
+                        <div class="bar-fill" style="width:@pct.ToString("0.##")%"></div>
+                    </div>
+                    <span class="bar-value">S/ @p.Revenue.ToString("N2") · @p.Quantity u.</span>
+                </div>
+            }
+        </div>
+    }
+</section>
+
+<section class="report-section">
+    <h2>Ventas por fecha</h2>
+    @if (report.SalesByDate.Count == 0)
+    {
+        <p class="muted">Sin datos.</p>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+                <tr><th>Fecha</th><th>Pedidos</th><th>Total</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var d in report.SalesByDate)
+                {
+                    <tr>
+                        <td>@d.Date.ToString("dd/MM/yyyy")</td>
+                        <td>@d.Orders</td>
+                        <td>S/ @d.Total.ToString("N2")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>
+
+<section class="report-section">
+    <h2>Detalle de pedidos</h2>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Código</th><th>Fecha</th><th>Cliente</th>
+                <th>Ítems</th><th>Subtotal</th><th>IGV</th><th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var o in report.Orders)
+            {
+                <tr>
+                    <td>@o.Code</td>
+                    <td>@o.OrderDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@o.CustomerName</td>
+                    <td>@o.Items</td>
+                    <td>S/ @o.Subtotal.ToString("N2")</td>
+                    <td>S/ @o.Tax.ToString("N2")</td>
+                    <td>S/ @o.Total.ToString("N2")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</section>

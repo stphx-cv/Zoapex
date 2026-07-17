@@ -98,6 +98,67 @@ public class OrderRepository(ZoapexDbContext ctx)
             .ToListAsync();
     }
 
+    // LINQ: reporte de ventas con análisis (KPIs, top productos, ventas por fecha, detalle)
+    // Es la "query adjunta" que alimenta el reporte web y la descarga a Excel.
+    public async Task<SalesReportDto> GetSalesReportAsync()
+    {
+        // Filas de pedidos (cabecera + nombre de cliente + n° de ítems)
+        var orders = await ctx.Orders
+            .AsNoTracking()
+            .Where(o => o.Status == 1)
+            .OrderByDescending(o => o.OrderDate)
+            .Select(o => new SalesOrderRowDto(
+                o.Code,
+                o.OrderDate,
+                o.Customer != null ? o.Customer.FirstName + " " + o.Customer.LastName : "Mostrador",
+                o.Details.Sum(d => (int?)d.Quantity) ?? 0,
+                o.Subtotal,
+                o.Tax,
+                o.Total))
+            .ToListAsync();
+
+        // Detalle plano (traducible a SQL) y agrupación en memoria por producto
+        var detailRows = await ctx.OrderDetails
+            .AsNoTracking()
+            .Where(d => d.Order.Status == 1)
+            .Select(d => new { d.Product.Name, d.Quantity, d.Subtotal })
+            .ToListAsync();
+
+        var topProducts = detailRows
+            .GroupBy(d => d.Name)
+            .Select(g => new TopProductDto(
+                g.Key,
+                g.Sum(d => d.Quantity),
+                g.Sum(d => d.Subtotal)))
+            .OrderByDescending(t => t.Revenue)
+            .Take(5)
+            .ToList();
+
+        // Ventas por fecha, calculadas desde los pedidos ya materializados
+        var salesByDate = orders
+            .GroupBy(o => o.OrderDate.Date)
+            .Select(g => new SalesByDateDto(
+                g.Key,
+                g.Count(),
+                g.Sum(o => o.Total)))
+            .OrderBy(s => s.Date)
+            .ToList();
+
+        var orderCount = orders.Count;
+        var totalRevenue = orders.Sum(o => o.Total);
+        var unitsSold = orders.Sum(o => o.Items);
+        var averageTicket = orderCount > 0 ? Math.Round(totalRevenue / orderCount, 2) : 0m;
+
+        return new SalesReportDto(
+            orderCount,
+            totalRevenue,
+            averageTicket,
+            unitsSold,
+            topProducts,
+            salesByDate,
+            orders);
+    }
+
     public static decimal CalculateSubtotal(IEnumerable<CartLineDto> lines)
         => lines.Sum(l => l.Subtotal);
 
